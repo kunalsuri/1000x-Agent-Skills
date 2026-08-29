@@ -28,6 +28,7 @@ Every skill introduced here must follow the repository's 3 core pillars:
 |---|---|---|
 | [`multi-agent-docs`](./multi-agent-docs/SKILL.md) | `🟢 Verified` | Scaffolds & synchronizes identical `CLAUDE.md` and `AGENTS.md` across platforms. |
 | [`public-repo-release-review`](./public-repo-release-review/SKILL.md) | `🟢 Verified` | Expert pre-flight audit for public GitHub releases: security/secret leaks, governance files, and link integrity. |
+| [`readme-designer`](./readme-designer/SKILL.md) | `🟢 Verified` | Modernizes and designs high-impact, world-class READMEs and documentation with rich spacing (`<br/>`), dividers (`---`), comparison matrices, and Mermaid diagrams. |
 
 ---
 

@@ -1,93 +1,163 @@
 #!/usr/bin/env python3
 """
-Skill Validator CLI for 1000x-Agent-Skills.
-Validates all skills against the Agent Skills specification, attestation requirements,
-and evaluation test coverage.
+Skill Doctor & Specification Validator CLI for 1000x-Agent-Skills.
+Validates all skills against the Agent Skills Open Specification,
+frontmatter token budgets, line limits, attestation schemas, and evaluation datasets.
 """
 
 import sys
 import os
 import re
 import json
+import argparse
 from pathlib import Path
+
+def estimate_tokens(text: str) -> int:
+    """Heuristic token estimation (~4 chars/token or word split)."""
+    return max(1, len(re.findall(r'\w+|[^\w\s]', text)))
 
 def validate_skill(skill_dir: Path) -> dict:
     errors = []
     warnings = []
+    score = 100
+    metrics = {}
+
     skill_md = skill_dir / "SKILL.md"
     attestation_json = skill_dir / "attestation.json"
     evals_json = skill_dir / "evals" / "test-cases.json"
 
     if not skill_md.exists():
-        return {"name": skill_dir.name, "errors": ["Missing SKILL.md file."], "warnings": []}
+        return {
+            "name": skill_dir.name,
+            "path": str(skill_dir),
+            "errors": ["Missing SKILL.md file."],
+            "warnings": [],
+            "score": 0,
+            "grade": "F",
+            "status": "FAIL",
+            "metrics": {}
+        }
 
-    content = skill_md.read_text(encoding="utf-8")
+    content = skill_md.read_text(encoding="utf-8", errors="replace")
     
     # 1. Frontmatter Validation
     fm_match = re.match(r"^---\r?\n(.*?)\r?\n---", content, re.DOTALL)
     if not fm_match:
         errors.append("Missing YAML frontmatter (enclosed by '---').")
+        score -= 40
     else:
         fm_text = fm_match.group(1)
+        fm_tokens = estimate_tokens(fm_text)
+        metrics["frontmatter_tokens"] = fm_tokens
+        
+        if fm_tokens > 200:
+            warnings.append(f"Frontmatter is ~{fm_tokens} tokens (> 150 token budget). Consider trimming description.")
+            score -= 10
         
         # Name check
         name_match = re.search(r"^name:\s*([^\r\n]+)", fm_text, re.MULTILINE)
         if not name_match:
             errors.append("Frontmatter missing 'name' field.")
+            score -= 20
         else:
             name = name_match.group(1).strip().strip("'\"")
             if name != skill_dir.name:
                 errors.append(f"Skill name '{name}' does not match directory name '{skill_dir.name}'.")
+                score -= 15
             if not re.match(r"^[a-z0-9]+(-[a-z0-9]+)*$", name):
                 errors.append(f"Invalid name format '{name}'. Must be lowercase alphanumeric with single hyphens.")
+                score -= 10
 
         # Description check
         desc_match = re.search(r"^description:\s*(.*?)(?=\n[a-z0-9_-]+:|\Z)", fm_text, re.DOTALL | re.MULTILINE)
         if not desc_match:
             errors.append("Frontmatter missing 'description' field.")
+            score -= 20
         else:
             desc = " ".join(desc_match.group(1).split())
             if len(desc) > 1024:
                 errors.append(f"Description exceeds 1024 characters ({len(desc)} chars).")
+                score -= 10
             if not re.search(r"(use when|trigger|when)", desc, re.IGNORECASE):
                 warnings.append("Description should contain explicit trigger context (e.g. 'Use when...').")
+                score -= 5
 
         # Version check
         if not re.search(r"^version:\s*\d+\.\d+\.\d+", fm_text, re.MULTILINE):
             warnings.append("Missing semantic version (e.g., 'version: 1.0.0').")
+            score -= 5
 
     # 2. Body Length Check
     lines = content.splitlines()
-    if len(lines) > 500:
-        warnings.append(f"SKILL.md is {len(lines)} lines (> 500 lines limit). Move references to references/.")
+    body_lines = len(lines)
+    metrics["body_lines"] = body_lines
+
+    if body_lines > 500:
+        warnings.append(f"SKILL.md is {body_lines} lines (> 500 lines limit). Move references to references/.")
+        score -= 15
 
     # 3. Attestation check
     if not attestation_json.exists():
         warnings.append("Missing attestation.json (skill is un-attested).")
+        score -= 15
     else:
         try:
             att_data = json.loads(attestation_json.read_text(encoding="utf-8"))
             if not att_data.get("attestation_status"):
                 warnings.append("attestation.json missing 'attestation_status'.")
+                score -= 5
+            metrics["attestation_status"] = att_data.get("attestation_status", "UNKNOWN")
         except Exception as e:
             errors.append(f"Malformed attestation.json: {e}")
+            score -= 15
 
     # 4. Evaluation test-cases check
     if not evals_json.exists():
         warnings.append("Missing evals/test-cases.json.")
+        score -= 10
+    else:
+        try:
+            eval_data = json.loads(evals_json.read_text(encoding="utf-8"))
+            pos = eval_data.get("trigger_evaluation", {}).get("positive_prompts", [])
+            neg = eval_data.get("trigger_evaluation", {}).get("negative_prompts", [])
+            metrics["eval_prompts_count"] = f"{len(pos)} pos / {len(neg)} neg"
+            if len(pos) < 3:
+                warnings.append(f"evals/test-cases.json has only {len(pos)} positive prompts (recommend >= 3).")
+                score -= 5
+        except Exception as e:
+            errors.append(f"Malformed evals/test-cases.json: {e}")
+            score -= 10
+
+    # Grade computation
+    score = max(0, min(100, score))
+    if score >= 90: grade = "A+"
+    elif score >= 80: grade = "A"
+    elif score >= 70: grade = "B"
+    elif score >= 55: grade = "C"
+    else: grade = "F"
 
     return {
         "name": skill_dir.name,
         "path": str(skill_dir),
         "errors": errors,
         "warnings": warnings,
-        "status": "FAIL" if errors else ("WARN" if warnings else "PASS")
+        "score": score,
+        "grade": grade,
+        "status": "FAIL" if errors else ("WARN" if warnings else "PASS"),
+        "metrics": metrics
     }
 
 def main():
-    # Force UTF-8 output encoding if possible
     if sys.stdout.encoding != 'utf-8':
-        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        try:
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        except Exception:
+            pass
+
+    parser = argparse.ArgumentParser(description="Skill Doctor & Validator CLI for 1000x-Agent-Skills.")
+    parser.add_argument("--skill", type=str, default=None, help="Validate a specific skill name.")
+    parser.add_argument("--strict", action="store_true", help="Fail on warnings as well as errors.")
+    args = parser.parse_args()
 
     repo_root = Path(__file__).resolve().parent.parent
     skills_root = repo_root / "skills"
@@ -97,22 +167,27 @@ def main():
         sys.exit(1)
 
     all_results = []
-    print("=" * 65)
-    print(" [SKILL DOCTOR] 1000x-Agent-Skills Validation Suite")
-    print("=" * 65)
+    print("=" * 72)
+    print(" 🩺 [SKILL DOCTOR] Specification & Health Diagnostic Suite")
+    print("=" * 72)
 
     for cat_dir in sorted(skills_root.iterdir()):
         if cat_dir.is_dir():
             for skill_dir in sorted(cat_dir.iterdir()):
-                if skill_dir.is_dir():
+                if skill_dir.is_dir() and (skill_dir / "SKILL.md").exists():
+                    if args.skill and skill_dir.name != args.skill:
+                        continue
                     res = validate_skill(skill_dir)
                     all_results.append(res)
                     icon = "[PASS]" if res["status"] == "PASS" else ("[WARN]" if res["status"] == "WARN" else "[FAIL]")
-                    print(f"{icon} [{cat_dir.name}/{res['name']}] -> {res['status']}")
+                    print(f"{icon} [{cat_dir.name}/{res['name']}] -> Health Score: {res['score']}/100 [Grade {res['grade']}]")
+                    if res["metrics"]:
+                        m_str = " | ".join(f"{k}: {v}" for k, v in res["metrics"].items())
+                        print(f"    ℹ️  {m_str}")
                     for err in res["errors"]:
-                        print(f"    - Error: {err}")
+                        print(f"    ❌ Error: {err}")
                     for warn in res["warnings"]:
-                        print(f"    - Warn:  {warn}")
+                        print(f"    ⚠️  Warn:  {warn}")
 
     total = len(all_results)
     passed = sum(1 for r in all_results if r["status"] == "PASS")
@@ -124,29 +199,28 @@ def main():
     readme_path = repo_root / "README.md"
     if readme_path.exists():
         readme_content = readme_path.read_text(encoding="utf-8")
-        # Match links to skills: ./skills/<category>/<skill-name>/...
         referenced_skills = re.findall(r'\(\.?/?skills/([a-z0-9_-]+)/([a-z0-9_-]+)(?:/SKILL\.md)?\)', readme_content)
         for cat, name in referenced_skills:
             target_skill_dir = skills_root / cat / name
             if not target_skill_dir.exists() or not (target_skill_dir / "SKILL.md").exists():
                 readme_errors.append(f"README.md references non-existent skill '{name}' in category '{cat}'.")
 
+    print("-" * 72)
     if readme_errors:
-        print("\n [README AUDIT] ❌ Found mismatched or phantom skills in README.md:")
+        print(" [README AUDIT] ❌ Found mismatched or phantom skills in README.md:")
         for r_err in readme_errors:
             print(f"    - {r_err}")
         failed += len(readme_errors)
     else:
-        print("\n [README AUDIT] ✅ README.md skills catalog matches physical filesystem 1:1.")
+        print(" [README AUDIT] ✅ README.md catalog matches physical filesystem 1:1.")
 
-    print("\n" + "=" * 65)
+    print("=" * 72)
     print(f" Summary: {total} skills scanned | {passed} Passed | {warned} Warnings | {failed} Failed")
-    print("=" * 65)
+    print("=" * 72)
 
-    if failed > 0:
+    if failed > 0 or (args.strict and warned > 0):
         sys.exit(1)
     sys.exit(0)
 
 if __name__ == "__main__":
     main()
-

@@ -1,0 +1,50 @@
+{
+  "skill_name": "readme-designer",
+  "version": "1.0.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "Take the role of documentation expert and update the readme for both coolness and for readability, add space using <br> and give '---' and markup bold etc.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "Our project README looks cluttered and boring. Redesign and modernize the README with shields badges, comparison tables, Mermaid diagrams, and clean vertical whitespace.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Improve the visual hierarchy, formatting, and readability of our repository documentation and README.md.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-04",
+        "prompt": "Scaffold a brand new world-class README for our open-source AI project with hero badges, 1-liner install, and architectural flowcharts.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-05",
+        "prompt": "Audit this README for broken anchor links, missing sections, and formatting quality.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "Implement a binary search tree in C++ with insert and delete operations.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Configure a PostgreSQL database replication connection pool on Kubernetes.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Train a PyTorch convolutional neural network on the CIFAR-10 image dataset.",
+        "expected_trigger": false
+      }
+    ]
+  }
+}
