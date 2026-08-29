@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "saas-app-builder",
+  "version": "1.0.0",
+  "attestation_status": "VERIFIED",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-08-29",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "claude-3-7-sonnet",
+      "status": "PASS",
+      "notes": "Verified full monorepo scaffolding, single-port Express serving, and Vitest test harness generation."
+    },
+    {
+      "platform": "Google Antigravity",
+      "model": "gemini-3.7-flash",
+      "status": "PASS",
+      "notes": "Verified Tailwind CSS v4 setup, shadcn UI component primitives, and autonomous verification loop."
+    },
+    {
+      "platform": "Cursor",
+      "model": "claude-3.5-sonnet",
+      "status": "PASS",
+      "notes": "Verified feature slice generation and Supertest API endpoint testing."
+    },
+    {
+      "platform": "OpenAI Codex",
+      "model": "gpt-4o",
+      "status": "PASS",
+      "notes": "Verified TypeScript compile check and shared Zod contract validation."
+    }
+  ],
+  "performance_summary": {
+    "success_rate_percent": 100,
+    "average_token_consumption": 1350,
+    "recovery_resilience": "High"
+  },
+  "provenance": {
+    "source_type": "original",
+    "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
+    "license": "Apache-2.0"
+  }
+}

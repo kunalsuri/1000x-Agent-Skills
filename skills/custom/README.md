@@ -30,6 +30,7 @@ Every skill introduced here must follow the repository's 3 core pillars:
 | [`preflight-test-engineer`](./preflight-test-engineer/SKILL.md) | `🟢 Verified` | Pre-flight codebase analysis, /tests/ suite generation, and 4-stage verification for Python & TypeScript/React. |
 | [`public-repo-release-review`](./public-repo-release-review/SKILL.md) | `🟢 Verified` | Expert pre-flight audit for public GitHub releases: security/secret leaks, governance files, and link integrity. |
 | [`readme-designer`](./readme-designer/SKILL.md) | `🟢 Verified` | Modernizes and designs high-impact, world-class READMEs and documentation with rich spacing (`<br/>`), dividers (`---`), comparison matrices, and Mermaid diagrams. |
+| [`saas-app-builder`](./saas-app-builder/SKILL.md) | `🟢 Verified` | Scaffolds and implements full-stack SaaS apps with React 19, Tailwind CSS v4, shadcn/ui, single-port Express serving, and an integrated 4-harness test suite. |
 
 ---
 
