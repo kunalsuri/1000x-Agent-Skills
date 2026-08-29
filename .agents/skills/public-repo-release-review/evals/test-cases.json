@@ -1,0 +1,45 @@
+{
+  "skill_name": "public-repo-release-review",
+  "version": "1.0.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "Take the role of an expert AI engineer and codebase reviewer and audit this codebase before we push it to GitHub.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "We are preparing to make this repository public on GitHub. Run a complete pre-flight release audit for secret leaks, missing security policies, and governance files.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Audit our open-source repo readiness, check for broken links and secrets, and scaffold CITATION.cff and COLLABORATORS.md.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-04",
+        "prompt": "Perform a pre-release review of this project before pushing to public GitHub to ensure it is 99.999% correct.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "Write a Python script to compute the Fibonacci series recursively.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-02",
+        "prompt": "How do I configure nginx for load balancing across two backend ports?",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Fix this CSS flexbox alignment issue in the navbar.",
+        "expected_trigger": false
+      }
+    ]
+  }
+}

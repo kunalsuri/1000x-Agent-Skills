@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill Doctor & Creator — 1000x Agent Skills</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-glass: rgba(30, 41, 59, 0.6);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(99, 102, 241, 0.5);
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-indigo: #6366f1;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #a855f7;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --gradient-brand: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);
+      --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-lg: 0 10px 30px -5px rgba(0, 0, 0, 0.5), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --font-mono: 'Fira Code', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.5;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 20%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(6, 182, 212, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(11, 15, 25, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-badge {
+      font-size: 1.5rem;
+      background: var(--gradient-brand);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 800;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .nav-tabs {
+      display: flex;
+      background: var(--bg-secondary);
+      padding: 0.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      gap: 0.25rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-indigo);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    }
+
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Grid Layout for Doctor */
+    .doctor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .doctor-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      backdrop-filter: blur(8px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      padding: 0.4rem 0.8rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-primary {
+      background: var(--accent-indigo);
+      border-color: transparent;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+    }
+
+    .btn-success {
+      background: var(--accent-emerald);
+      border-color: transparent;
+      color: #042f2e;
+      font-weight: 600;
+    }
+
+    .btn-success:hover {
+      background: #059669;
+      color: white;
+    }
+
+    textarea.code-editor {
+      width: 100%;
+      min-height: 480px;
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: #e2e8f0;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 1rem;
+      resize: vertical;
+      line-height: 1.6;
+      tab-size: 2;
+    }
+
+    textarea.code-editor:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    /* Diagnostics Section */
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .metric-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 0.75rem;
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.2rem;
+    }
+
+    .score-circle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      font-size: 1.4rem;
+      font-weight: 800;
+      border: 4px solid var(--accent-emerald);
+      color: var(--accent-emerald);
+      margin: 0 auto;
+    }
+
+    .score-good { border-color: var(--accent-emerald); color: var(--accent-emerald); }
+    .score-warn { border-color: var(--accent-amber); color: var(--accent-amber); }
+    .score-bad { border-color: var(--accent-rose); color: var(--accent-rose); }
+
+    .diagnostic-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 380px;
+      overflow-y: auto;
+      padding-right: 0.3rem;
+    }
+
+    .diag-item {
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      line-height: 1.4;
+      border-left: 4px solid transparent;
+    }
+
+    .diag-pass {
+      background: rgba(16, 185, 129, 0.08);
+      border-left-color: var(--accent-emerald);
+      color: #d1fae5;
+    }
+
+    .diag-error {
+      background: rgba(244, 63, 94, 0.08);
+      border-left-color: var(--accent-rose);
+      color: #ffe4e6;
+    }
+
+    .diag-warn {
+      background: rgba(245, 158, 11, 0.08);
+      border-left-color: var(--accent-amber);
+      color: #fef3c7;
+    }
+
+    .diag-info {
+      background: rgba(6, 182, 212, 0.08);
+      border-left-color: var(--accent-cyan);
+      color: #cffafe;
+    }
+
+    .diag-icon {
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* Creator Form */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    @media (max-width: 860px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    label span.hint {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    input[type="text"], select, textarea.form-input {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      padding: 0.6rem 0.8rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus, select:focus, textarea.form-input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+    }
+
+    .preview-box {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      white-space: pre-wrap;
+      max-height: 450px;
+      overflow-y: auto;
+      color: #94a3b8;
+    }
+
+    /* Spec table */
+    .spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    .spec-table th, .spec-table td {
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 0.8rem;
+      text-align: left;
+    }
+
+    .spec-table th {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .badge-indigo { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .badge-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <a href="#" class="brand">
+        <span class="brand-badge">⚡</span>
+        <div>
+          <div class="brand-title">Skill Doctor & Creator</div>
+          <div class="brand-sub">1000x-Agent-Skills • Capability-Declared, Attested & Evaluated</div>
+        </div>
+      </a>
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('doctor')">🩺 Skill Doctor</button>
+        <button class="tab-btn" onclick="switchTab('creator')">✨ Skill Creator</button>
+        <button class="tab-btn" onclick="switchTab('specs')">📐 Spec & Rules</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- TAB 1: DOCTOR -->
+    <div id="tab-doctor" class="tab-content active">
+      <div class="doctor-grid">
+        
+        <!-- Left: Editor -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📝 SKILL.md Inspector</div>
+            <div class="btn-group">
+              <button class="btn" onclick="loadSampleSkill()">Load Sample</button>
+              <button class="btn" onclick="autoFixSkill()">Auto-Fix</button>
+              <button class="btn btn-primary" onclick="copyCurrentSkill()">📋 Copy</button>
+            </div>
+          </div>
+          <textarea id="skillEditor" class="code-editor" placeholder="Paste your SKILL.md content here (including YAML frontmatter)..." oninput="runDiagnostics()"></textarea>
+          <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+            <span id="lineCount">0 lines</span>
+            <span id="charCount">0 characters</span>
+          </div>
+        </div>
+
+        <!-- Right: Health & Diagnostic Output -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🩺 Health & Compliance Report</div>
+            <span id="statusBadge" class="badge badge-emerald">Ready</span>
+          </div>
+
+          <div class="metrics-bar">
+            <div class="metric-card">
+              <div id="healthScore" class="score-circle score-good">100</div>
+              <div class="metric-label">Health Score</div>
+            </div>
+            <div class="metric-card">
+              <div id="headerTokens" class="metric-val">~0</div>
+              <div class="metric-label">Header Tokens (Budget &le;150)</div>
+            </div>
+            <div class="metric-card">
+              <div id="bodyLines" class="metric-val">0</div>
+              <div class="metric-label">Body Lines (Limit &le;500)</div>
+            </div>
+            <div class="metric-card">
+              <div id="triggerQuality" class="metric-val" style="color: var(--accent-emerald);">High</div>
+              <div class="metric-label">Trigger Strength</div>
+            </div>
+          </div>
+
+          <div class="panel-title" style="font-size: 0.85rem; margin-top: 0.5rem;">Diagnostic Checklist</div>
+          <div id="diagnosticList" class="diagnostic-list">
+            <!-- Dynamic checks will populate here -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: CREATOR -->
+    <div id="tab-creator" class="tab-content">
+      <div class="doctor-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">✨ Interactive Skill Builder</div>
+            <button class="btn btn-primary" onclick="generateFromForm()">Generate SKILL.md</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Skill Name <span class="hint">lowercase-hyphen (e.g. resumable-sdd)</span></label>
+              <input type="text" id="genName" placeholder="my-awesome-skill" value="systematic-debugging" />
+            </div>
+
+            <div class="form-group">
+              <label>Version & Compatibility</label>
+              <input type="text" id="genVersion" placeholder="1.0.0" value="1.0.0" />
+            </div>
+
+            <div class="form-group full">
+              <label>Description (What + When to Trigger) <span class="hint">&le; 1024 chars</span></label>
+              <textarea id="genDesc" class="form-input" rows="3" placeholder="Hypothesis-driven root cause debugging. Use when tracking down regressions, unexpected test failures, or silent bugs.">Step-by-step hypothesis-driven root-cause debugging. Use when diagnosing code regressions, recurring test failures, or subtle race conditions before proposing fixes.</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Category / Ecosystem</label>
+              <select id="genCategory" class="form-input">
+                <option value="anthropic">Anthropic Pattern</option>
+                <option value="google">Google Antigravity</option>
+                <option value="custom" selected>Custom Workflow</option>
+                <option value="third-party">Third-Party Spec</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Allowed Tools <span class="hint">comma separated</span></label>
+              <input type="text" id="genTools" placeholder="run_command, view_file, grep_search" value="view_file, grep_search, run_command, replace_file_content" />
+            </div>
+
+            <div class="form-group full">
+              <label>Workflow Step 1 (Observation & Hypotheses)</label>
+              <textarea id="genStep1" class="form-input" rows="2">1. Formulate 2-3 distinct falsifiable hypotheses before modifying any file.</textarea>
+            </div>
+
+            <div class="form-group full">
+              <label>Workflow Step 2 (Minimal Reproduction & Isolation)</label>
+              <textarea id="genStep2" class="form-input" rows="2">2. Write a minimal reproduction test or script that fails consistently.</textarea>
+            </div>
+
+            <div class="form-group full">
+              <label>Workflow Step 3 (Verification & Attestation)</label>
+              <textarea id="genStep3" class="form-input" rows="2">3. Verify fix passes the reproduction test, run the full suite, and document root cause in a brief log.</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📦 Generated Artifacts Preview</div>
+            <div class="btn-group">
+              <button class="btn btn-success" onclick="transferToDoctor()">Send to Doctor 🩺</button>
+              <button class="btn" onclick="downloadSkillFile()">💾 Download</button>
+            </div>
+          </div>
+          <div id="creatorPreview" class="preview-box">Click "Generate SKILL.md" to preview...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: SPEC & RULES -->
+    <div id="tab-specs" class="tab-content">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">📐 Agent Skills Specification Reference (agentskills.io)</div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Every skill in this repository follows the open standard compatible with Claude Code, Google Antigravity, Cursor, OpenAI Codex, and Copilot.
+        </p>
+
+        <table class="spec-table">
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th>Requirement</th>
+              <th>Description & Best Practice</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>name</code></td>
+              <td><span class="badge badge-indigo">Required</span></td>
+              <td>Must be lowercase alphanumeric and hyphens only (<code>^[a-z0-9-]+$</code>), &le;64 chars. Must exactly match directory name.</td>
+            </tr>
+            <tr>
+              <td><code>description</code></td>
+              <td><span class="badge badge-indigo">Required</span></td>
+              <td>&le;1024 characters. Must state both <strong>WHAT</strong> the skill does and <strong>WHEN</strong> to trigger (e.g., <em>"Use when..."</em>). Critical for auto-routing.</td>
+            </tr>
+            <tr>
+              <td><code>version</code></td>
+              <td><span class="badge badge-emerald">Attestation</span></td>
+              <td>Semantic versioning (<code>1.0.0</code>). Incremented upon workflow changes.</td>
+            </tr>
+            <tr>
+              <td><code>compatibility</code></td>
+              <td><span class="badge badge-amber">Optional</span></td>
+              <td>List of tested agent platforms: <code>[claude-code, antigravity, cursor, codex]</code>.</td>
+            </tr>
+            <tr>
+              <td><code>allowed-tools</code></td>
+              <td><span class="badge badge-amber">Optional</span></td>
+              <td>Tools this skill restricts or prefers to use (e.g., <code>[view_file, run_command]</code>).</td>
+            </tr>
+            <tr>
+              <td><code>Progressive Loading</code></td>
+              <td><span class="badge badge-indigo">Architecture</span></td>
+              <td>Agent loads frontmatter at startup (~100 tokens), then only loads full body when triggered. Keep body &le;500 lines.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    1000x-Agent-Skills • Built for Educators, Engineers, and Autonomous Multi-Agent Workflows
+  </footer>
+
+  <script>
+    const SAMPLE_SKILL = `---
+name: resumable-sdd
+version: 1.1.0
+author: Kunal Suri
+description: Lightweight resumable spec-driven development (SDD). Commits the plan and checklist to git after each step so long tasks resume without lost context. Use when running multi-step tasks that may exceed LLM token limits.
+compatibility: [claude-code, antigravity, cursor, codex]
+allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
+tags: [sdd, persistence, git, workflows]
+---
+
+# Resumable Spec-Driven Development (SDD)
+
+## Purpose
+Execute multi-step tasks durably by committing progress after each milestone, ensuring resilience against session drops, token limits, or network interruptions.
+
+## Workflow
+
+### 1. Specification & Checklist Initializer
+Create \`.sdd/spec.md\` and \`.sdd/checklist.md\` before altering code:
+- List atomic milestones with checkable boxes \`- [ ]\`.
+- Commit the initial spec: \`git commit -m "chore(sdd): initialize spec and checklist"\`.
+
+### 2. Step-by-Step Execution
+For each atomic item in \`checklist.md\`:
+1. Execute the code changes or test suites.
+2. Verify functionality.
+3. Update \`checklist.md\` to \`- [x]\`.
+4. Create an atomic git commit: \`git commit -m "feat(step-N): completed <item>"\`.
+
+### 3. Resumption Protocol
+When resumed in a fresh context:
+1. Read \`.sdd/checklist.md\` to find the first unchecked item.
+2. Inspect the latest git commit diff.
+3. Resume execution from the exact interrupted step.
+`;
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      
+      event.currentTarget.classList.add('active');
+      document.getElementById('tab-' + tabId).classList.add('active');
+      if (tabId === 'doctor') {
+        runDiagnostics();
+      }
+    }
+
+    function loadSampleSkill() {
+      document.getElementById('skillEditor').value = SAMPLE_SKILL;
+      runDiagnostics();
+    }
+
+    function runDiagnostics() {
+      const content = document.getElementById('skillEditor').value;
+      const lines = content.split('\n');
+      const charCount = content.length;
+      document.getElementById('lineCount').innerText = `${lines.length} lines`;
+      document.getElementById('charCount').innerText = `${charCount} characters`;
+
+      const diagList = document.getElementById('diagnosticList');
+      diagList.innerHTML = '';
+
+      let score = 100;
+      const checks = [];
+
+      // Check Frontmatter Presence
+      const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if (!fmMatch) {
+        checks.push({ type: 'error', text: 'Missing YAML frontmatter delimiters (--- at top).' });
+        score -= 40;
+      } else {
+        const fmText = fmMatch[1];
+        const headerTokens = Math.round(fmText.length / 4);
+        document.getElementById('headerTokens').innerText = `~${headerTokens}`;
+
+        if (headerTokens > 150) {
+          checks.push({ type: 'warn', text: `Header token budget high (~${headerTokens} tokens). Keep under 150 for fast progressive loading.` });
+          score -= 10;
+        } else {
+          checks.push({ type: 'pass', text: `Header token budget optimal (~${headerTokens} tokens &le; 150).` });
+        }
+
+        // Name check
+        const nameMatch = fmText.match(/name:\s*([^\r\n]+)/);
+        if (!nameMatch) {
+          checks.push({ type: 'error', text: 'Frontmatter is missing required "name" field.' });
+          score -= 20;
+        } else {
+          const name = nameMatch[1].trim().replace(/^['"]|['"]$/g, '');
+          if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) {
+            checks.push({ type: 'error', text: `Invalid skill name "${name}". Must be lowercase alphanumeric with hyphens, no consecutive hyphens.` });
+            score -= 15;
+          } else if (name.length > 64) {
+            checks.push({ type: 'warn', text: `Skill name exceeds 64 chars (${name.length} chars).` });
+            score -= 10;
+          } else {
+            checks.push({ type: 'pass', text: `Skill name "${name}" conforms to specification.` });
+          }
+        }
+
+        // Description check
+        const descMatch = fmText.match(/description:\s*([^\r\n]+(?:\r?\n\s+[^\r\n]+)*)/);
+        if (!descMatch) {
+          checks.push({ type: 'error', text: 'Frontmatter is missing required "description" field.' });
+          score -= 25;
+        } else {
+          const desc = descMatch[1].replace(/\r?\n\s+/g, ' ').trim();
+          if (desc.length > 1024) {
+            checks.push({ type: 'error', text: `Description exceeds 1024 chars (${desc.length} chars).` });
+            score -= 15;
+          } else {
+            checks.push({ type: 'pass', text: `Description length is valid (${desc.length}/1024 chars).` });
+          }
+
+          // Trigger strength keywords
+          const hasWhen = /use\s+when|trigger|when\s+(to|you|handling|creating|tracking|debugging)/i.test(desc);
+          if (!hasWhen) {
+            checks.push({ type: 'warn', text: 'Description should explicitly include "Use when..." to help agent autonomous routing.' });
+            score -= 10;
+            document.getElementById('triggerQuality').innerText = 'Moderate';
+            document.getElementById('triggerQuality').style.color = 'var(--accent-amber)';
+          } else {
+            checks.push({ type: 'pass', text: 'Description includes proactive "Use when..." trigger condition.' });
+            document.getElementById('triggerQuality').innerText = 'High';
+            document.getElementById('triggerQuality').style.color = 'var(--accent-emerald)';
+          }
+        }
+
+        // Version check
+        if (!/version:\s*[0-9]+\.[0-9]+\.[0-9]+/i.test(fmText)) {
+          checks.push({ type: 'info', text: 'No semantic version declared. Adding "version: 1.0.0" is recommended for attestation.' });
+          score -= 5;
+        } else {
+          checks.push({ type: 'pass', text: 'Semantic version declared.' });
+        }
+      }
+
+      // Body lines check
+      const bodyLines = lines.length;
+      document.getElementById('bodyLines').innerText = bodyLines;
+      if (bodyLines > 500) {
+        checks.push({ type: 'warn', text: `Skill body is ${bodyLines} lines (>500 lines). Move extensive reference documents into a references/ folder.` });
+        score -= 10;
+      } else if (bodyLines > 20) {
+        checks.push({ type: 'pass', text: `Body length is well-scoped (${bodyLines} lines &le; 500).` });
+      }
+
+      score = Math.max(0, Math.min(100, score));
+      const scoreEl = document.getElementById('healthScore');
+      scoreEl.innerText = score;
+      scoreEl.className = 'score-circle ' + (score >= 85 ? 'score-good' : score >= 60 ? 'score-warn' : 'score-bad');
+
+      const badge = document.getElementById('statusBadge');
+      if (score >= 85) {
+        badge.className = 'badge badge-emerald';
+        badge.innerText = 'Spec Compliant (Grade A)';
+      } else if (score >= 60) {
+        badge.className = 'badge badge-amber';
+        badge.innerText = 'Needs Polish (Grade B)';
+      } else {
+        badge.className = 'badge badge-indigo';
+        badge.innerText = 'Errors Detected';
+      }
+
+      // Render check items
+      checks.forEach(c => {
+        const item = document.createElement('div');
+        item.className = `diag-item diag-${c.type}`;
+        const icon = c.type === 'pass' ? '✅' : c.type === 'error' ? '❌' : c.type === 'warn' ? '⚠️' : 'ℹ️';
+        item.innerHTML = `<span class="diag-icon">${icon}</span><div>${c.text}</div>`;
+        diagList.appendChild(item);
+      });
+    }
+
+    function autoFixSkill() {
+      let content = document.getElementById('skillEditor').value;
+      if (!content.trim()) {
+        loadSampleSkill();
+        return;
+      }
+
+      // Ensure frontmatter
+      if (!/^---\r?\n/.test(content)) {
+        content = `---\nname: my-skill\nversion: 1.0.0\ndescription: Brief description. Use when performing this task.\n---\n\n` + content;
+      }
+
+      document.getElementById('skillEditor').value = content;
+      runDiagnostics();
+    }
+
+    function copyCurrentSkill() {
+      const text = document.getElementById('skillEditor').value;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied SKILL.md to clipboard!');
+      });
+    }
+
+    function generateFromForm() {
+      const name = document.getElementById('genName').value.trim() || 'custom-skill';
+      const version = document.getElementById('genVersion').value.trim() || '1.0.0';
+      const desc = document.getElementById('genDesc').value.trim();
+      const tools = document.getElementById('genTools').value.trim().split(',').map(t => t.trim()).filter(Boolean);
+      const step1 = document.getElementById('genStep1').value.trim();
+      const step2 = document.getElementById('genStep2').value.trim();
+      const step3 = document.getElementById('genStep3').value.trim();
+
+      const toolsYaml = tools.length > 0 ? `allowed-tools: [${tools.join(', ')}]\n` : '';
+
+      const skillMd = `---
+name: ${name}
+version: ${version}
+description: ${desc}
+compatibility: [claude-code, antigravity, cursor, codex]
+${toolsYaml}tags: [coding, automated-workflow]
+---
+
+# ${name.replace(/-/g, ' ').replace(/\\b\\w/g, l => l.toUpperCase())}
+
+## Purpose
+${desc}
+
+## Execution Steps
+
+### Step 1: Initial Assessment
+${step1}
+
+### Step 2: Implementation & Validation
+${step2}
+
+### Step 3: Final Verification & Attestation
+${step3}
+`;
+
+      document.getElementById('creatorPreview').innerText = skillMd;
+    }
+
+    function transferToDoctor() {
+      generateFromForm();
+      const generated = document.getElementById('creatorPreview').innerText;
+      document.getElementById('skillEditor').value = generated;
+      switchTab('doctor');
+    }
+
+    function downloadSkillFile() {
+      generateFromForm();
+      const text = document.getElementById('creatorPreview').innerText;
+      const blob = new Blob([text], { type: 'text/markdown' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'SKILL.md';
+      a.click();
+    }
+
+    // Auto initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSampleSkill();
+      generateFromForm();
+    });
+  </script>
+</body>
+</html>

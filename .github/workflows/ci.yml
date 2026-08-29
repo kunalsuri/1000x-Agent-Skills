@@ -1,0 +1,29 @@
+name: CI - Skill Doctor & Multi-Agent Validation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Skills & Attestation Specification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Skill Doctor Validator
+        run: |
+          python scripts/validate_skills.py
+
+      - name: Run Pre-Flight Release Audit
+        run: |
+          python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict

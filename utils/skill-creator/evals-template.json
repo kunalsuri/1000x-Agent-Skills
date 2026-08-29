@@ -1,0 +1,42 @@
+{
+  "skill_name": "example-skill-name",
+  "version": "1.0.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "I have an elusive race condition that only appears under heavy load. Help me systematically diagnose and debug it.",
+        "expected_trigger": true,
+        "rationale": "Direct match for hypothesis-driven debugging workflow."
+      },
+      {
+        "id": "pos-02",
+        "prompt": "Our CI test suite started failing after commit abc1234. Let's find the root cause.",
+        "expected_trigger": true,
+        "rationale": "Regression analysis trigger."
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "What is the capital of France?",
+        "expected_trigger": false,
+        "rationale": "General knowledge query, skill must stay inert."
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Format this markdown table into CSV.",
+        "expected_trigger": false,
+        "rationale": "Trivial formatting task, no complex diagnosis required."
+      }
+    ]
+  },
+  "execution_benchmarks": [
+    {
+      "task_id": "bench-01",
+      "description": "Reproduce and isolate failing unit test in dummy repo",
+      "metric": "time_to_isolation_sec",
+      "threshold_max": 120
+    }
+  ]
+}

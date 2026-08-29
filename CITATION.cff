@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this software or agent skills in your research or tooling, please cite it as below."
+authors:
+  - family-names: "Suri"
+    given-names: "Kunal"
+    email: "kunal.suri@cea.fr"
+    affiliation: "CEA List"
+title: "1000x-Agent-Skills: The Capability-Declared, Attested & Evaluated Skills Suite for Autonomous AI Coding Agents"
+version: 1.0.0
+date-released: 2026-08-29
+url: "https://github.com/kunalsuri/1000x-Agent-Skills"
+license: "Apache-2.0"
+keywords:
+  - "agent-skills"
+  - "autonomous-agents"
+  - "claude-code"
+  - "antigravity"
+  - "ai-engineering"
+  - "preflight-audit"

@@ -1,0 +1,35 @@
+{
+  "skill_name": "multi-agent-docs",
+  "version": "1.1.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "Set up this repository so it works with identical context across Claude Code and Antigravity. Create CLAUDE.md and AGENTS.md.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "Our AGENTS.md and CLAUDE.md have diverged and have conflicting test commands. Let's sync them up.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Scaffold the multi-agent directories .claude/ and .agents/ and generate synchronized project guidelines for our project.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "Calculate the fibonacci series up to 20.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-02",
+        "prompt": "How do I install nodejs?",
+        "expected_trigger": false
+      }
+    ]
+  }
+}

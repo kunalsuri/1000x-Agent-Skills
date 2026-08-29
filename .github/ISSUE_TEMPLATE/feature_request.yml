@@ -1,0 +1,28 @@
+name: 💡 Feature / Skill Request
+description: Propose a new agent skill, tool, or repository improvement.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Have an idea for a high-impact agent skill or improvement? Let us know!
+  - type: input
+    id: title
+    attributes:
+      label: Skill / Feature Title
+      placeholder: "e.g., git-rebase-conflict-resolver"
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement / Agent Failure Mode
+      description: What repetitive task or agent failure mode does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_workflow
+    attributes:
+      label: Proposed Capability & Workflow
+      description: How should the skill execute?
+    validations:
+      required: true
