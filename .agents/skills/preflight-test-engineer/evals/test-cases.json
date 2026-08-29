@@ -1,0 +1,45 @@
+{
+  "skill_name": "preflight-test-engineer",
+  "version": "1.0.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "Create a comprehensive test suite for this codebase in a /tests/ folder and verify all tests before running the application.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "We need to test our Python project before running it. Scaffold hermetic unit, integration, and smoke tests in /tests/ with conftest.py fixtures.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Analyze test gaps in our React TypeScript application, generate component and unit tests using React Testing Library and Vitest, and run pre-flight checks.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-04",
+        "prompt": "Run pre-flight test validation across our codebase before we deploy or start the production server.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "Write a CSS animation for a pulsing gradient button.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Convert this SQLite database schema into PostgreSQL DDL statements.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Explain the difference between TCP and UDP networking protocols.",
+        "expected_trigger": false
+      }
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "preflight-test-engineer",
+  "version": "1.0.0",
+  "attestation_status": "VERIFIED",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-08-29",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "claude-3-7-sonnet",
+      "status": "PASS",
+      "notes": "Verified AST codebase analysis, automatic /tests/ suite scaffolding, and hermetic pre-flight runner."
+    },
+    {
+      "platform": "Google Antigravity",
+      "model": "gemini-3.7-flash",
+      "status": "PASS",
+      "notes": "Verified 4-stage pre-flight pipeline, multi-stack test scaffolding, and boundary test recipes."
+    },
+    {
+      "platform": "Cursor",
+      "model": "claude-3.5-sonnet",
+      "status": "PASS",
+      "notes": "Deterministic CLI helper integration and unit test coverage generation verified."
+    },
+    {
+      "platform": "OpenAI Codex",
+      "model": "gpt-4o",
+      "status": "PASS",
+      "notes": "Test gap analysis and test runner configuration verified."
+    }
+  ],
+  "performance_summary": {
+    "success_rate_percent": 100,
+    "average_token_consumption": 1280,
+    "recovery_resilience": "High"
+  },
+  "provenance": {
+    "source_type": "original",
+    "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
+    "license": "Apache-2.0"
+  }
+}
