@@ -7,7 +7,6 @@ and an integrated 4-harness test suite (Vitest + Testing Library + Supertest + Z
 """
 
 import sys
-import os
 import json
 import argparse
 from pathlib import Path
@@ -45,7 +44,8 @@ PACKAGE_MANIFEST = {
         "@radix-ui/react-slot": "^1.1.1",
         "zod": "^3.24.1",
         "express": "^4.21.2",
-        "cors": "^2.8.5"
+        "cors": "^2.8.5",
+        "bcryptjs": "^2.4.3"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
@@ -58,6 +58,7 @@ PACKAGE_MANIFEST = {
         "@types/express": "^5.0.0",
         "@types/cors": "^2.8.17",
         "@types/node": "^22.10.1",
+        "@types/bcryptjs": "^2.4.6",
         "tsx": "^4.19.2",
         "vitest": "^2.1.8",
         "@testing-library/react": "^16.1.0",
@@ -111,6 +112,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./client/src/test/setup.ts'],
+    // Backend integration tests share non-atomic JSON files under data/*.json.
+    // Running test files in parallel can interleave reads/writes across suites
+    // and corrupt those files mid-write, so keep file execution sequential.
+    fileParallelism: false,
     include: [
       'client/src/**/*.{test,spec}.{ts,tsx}',
       'server/**/*.{test,spec}.ts'
@@ -170,7 +175,7 @@ ROOT_README_MD = """# 🚀 {app_name}
 - **Backend**: Express + TypeScript (TSX) on **Port 3031**
 - **Test Suite**: Vitest, `@testing-library/react`, Supertest
 - **Contracts**: Shared Zod schemas (`@shared/schemas`)
-- **Database**: JSON File Storage with thread-safe file persistence (`data/`)
+- **Database**: JSON file storage (`data/`) — simple and dependency-free, with no concurrent-write locking; tests run with `fileParallelism: false` for this reason (see `references/test-harness-and-tdd.md`)
 
 ---
 
@@ -328,60 +333,99 @@ CLIENT_TSCONFIG = """{
 
 CLIENT_INDEX_CSS = """@import "tailwindcss";
 
+/*
+ * Tailwind v4 CSS-first theming: custom properties only become real
+ * utility classes (bg-primary, text-muted-foreground, rounded-lg, ...)
+ * when they're registered inside `@theme` — a bare `:root`/`.dark`
+ * declaration compiles with zero errors but silently drops every one
+ * of these utilities from the output CSS. This block is not optional.
+ * (Verify it worked: after `npm run build`, `dist/client/assets/*.css`
+ * must contain a `.bg-primary` rule — see SKILL.md Phase 1.)
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.16 0.014 264.2);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.16 0.014 264.2);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.16 0.014 264.2);
+  --primary: oklch(0.546 0.226 264.4);
+  --primary-foreground: oklch(0.98 0.005 264);
+  --secondary: oklch(0.965 0.004 264.5);
+  --secondary-foreground: oklch(0.24 0.02 264.4);
+  --muted: oklch(0.965 0.004 264.5);
+  --muted-foreground: oklch(0.51 0.018 264.4);
+  --accent: oklch(0.95 0.02 264.4);
+  --accent-foreground: oklch(0.24 0.02 264.4);
+  --destructive: oklch(0.58 0.22 27.3);
+  --destructive-foreground: oklch(0.98 0.005 264);
+  --border: oklch(0.91 0.006 264.5);
+  --input: oklch(0.91 0.006 264.5);
+  --ring: oklch(0.546 0.226 264.4);
+}
+
+.dark {
+  --background: oklch(0.16 0.012 264.2);
+  --foreground: oklch(0.97 0.004 264.5);
+  --card: oklch(0.205 0.013 264.4);
+  --card-foreground: oklch(0.97 0.004 264.5);
+  --popover: oklch(0.205 0.013 264.4);
+  --popover-foreground: oklch(0.97 0.004 264.5);
+  --primary: oklch(0.685 0.19 264.4);
+  --primary-foreground: oklch(0.16 0.012 264.2);
+  --secondary: oklch(0.27 0.014 264.4);
+  --secondary-foreground: oklch(0.97 0.004 264.5);
+  --muted: oklch(0.27 0.014 264.4);
+  --muted-foreground: oklch(0.66 0.014 264.4);
+  --accent: oklch(0.3 0.03 264.4);
+  --accent-foreground: oklch(0.97 0.004 264.5);
+  --destructive: oklch(0.65 0.2 25);
+  --destructive-foreground: oklch(0.97 0.004 264.5);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.685 0.19 264.4);
+}
+
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-  }
-
   * {
-    border-color: hsl(var(--border));
+    border-color: var(--border);
   }
 
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Inter', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
   }
 }
 """
@@ -413,13 +457,15 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 );
 """
 
-CLIENT_APP_TSX = """import React, { useEffect } from 'react';
+CLIENT_APP_TSX = """import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/lib/state';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Signup from '@/pages/Signup';
 import Dashboard from '@/pages/Dashboard';
+import TeamUsers from '@/pages/TeamUsers';
+import Settings from '@/pages/Settings';
 import AppLayout from '@/components/layout/AppLayout';
 
 export default function App() {
@@ -441,6 +487,8 @@ export default function App() {
       <Route path="/signup" element={<Signup />} />
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard/users" element={<TeamUsers />} />
+        <Route path="/dashboard/settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -522,12 +570,17 @@ interface AuthState {
   user: User | null;
   token: string | null;
   theme: 'light' | 'dark';
+  /** Desktop: expanded (w-64) vs collapsed to an icon rail. */
   sidebarOpen: boolean;
+  /** Mobile: whether the sidebar drawer overlay is showing. */
+  mobileNavOpen: boolean;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setTheme: (theme: 'light' | 'dark') => void;
   toggleTheme: () => void;
   toggleSidebar: () => void;
+  toggleMobileNav: () => void;
+  setMobileNavOpen: (open: boolean) => void;
   logout: () => void;
 }
 
@@ -542,6 +595,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   token: 'mock_jwt_token_alex',
   theme: (typeof window !== 'undefined' && (localStorage.getItem('saas_theme') as 'light' | 'dark')) || 'light',
   sidebarOpen: true,
+  mobileNavOpen: false,
   setUser: (user) => set({ user }),
   setToken: (token) => {
     if (token) localStorage.setItem('saas_auth_token', token);
@@ -559,6 +613,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       return { theme: nextTheme };
     }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+  toggleMobileNav: () => set((state) => ({ mobileNavOpen: !state.mobileNavOpen })),
+  setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
   logout: () => {
     localStorage.removeItem('saas_auth_token');
     set({ user: null, token: null });
@@ -719,8 +775,7 @@ export function Badge({ className, variant, ...props }: BadgeProps) {
 }
 """
 
-CLIENT_THEME_TOGGLE_TSX = """import React from 'react';
-import { Sun, Moon } from 'lucide-react';
+CLIENT_THEME_TOGGLE_TSX = """import { Sun, Moon } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
 import { Button } from '@/components/ui/button';
 
@@ -742,15 +797,14 @@ export function ThemeToggle() {
 }
 """
 
-CLIENT_NAVBAR_TSX = """import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Layers, Menu, LogOut } from 'lucide-react';
+CLIENT_NAVBAR_TSX = """import { Link, useNavigate } from 'react-router-dom';
+import { Layers, Menu, X, LogOut } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
-  const { user, logout, toggleSidebar } = useAuthStore();
+  const { user, logout, mobileNavOpen, toggleMobileNav } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -759,12 +813,18 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-16 items-center px-4 md:px-6 justify-between">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
+      <div className="flex h-14 items-center px-4 md:px-6 justify-between">
         <div className="flex items-center gap-3">
           {user && (
-            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
-              <Menu className="h-5 w-5" />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleMobileNav}
+              className="md:hidden"
+              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileNavOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
           )}
           <Link to="/" className="flex items-center gap-2 font-bold text-lg text-primary tracking-tight">
@@ -805,35 +865,43 @@ export function Navbar() {
 }
 """
 
-CLIENT_SIDEBAR_TSX = """import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Settings, Activity, Sparkles } from 'lucide-react';
+CLIENT_SIDEBAR_TSX = """import { NavLink } from 'react-router-dom';
+import { LayoutDashboard, Users, Settings, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
 import { cn } from '@/lib/utils';
 
+// Every entry here MUST have a matching <Route> in App.tsx — a nav item
+// pointing at a route that doesn't exist falls through to the catch-all
+// `<Navigate to="/" />` and silently bounces the user back to the landing
+// page. If you add a page for a new domain feature, add both at once.
 export function Sidebar() {
-  const { sidebarOpen } = useAuthStore();
+  const { sidebarOpen, toggleSidebar, mobileNavOpen, setMobileNavOpen } = useAuthStore();
 
   const navItems = [
     { to: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-    { to: '/dashboard/features', label: 'Domain Features', icon: Sparkles },
-    { to: '/dashboard/analytics', label: 'Analytics', icon: Activity },
     { to: '/dashboard/users', label: 'Team & Users', icon: Users },
     { to: '/dashboard/settings', label: 'Settings', icon: Settings },
   ];
 
   return (
-    <aside
-      className={cn(
-        'fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-card transition-all duration-300 md:static',
-        sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full md:w-20 md:translate-x-0'
+    <>
+      {/* Mobile backdrop — tap outside the drawer to close it */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-foreground/40 md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+          aria-hidden="true"
+        />
       )}
-    >
-      <div className="flex flex-col gap-2 p-4 flex-1">
-        <div className="px-3 py-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          {sidebarOpen ? 'Workspace' : '•••'}
-        </div>
-        <nav className="flex flex-col gap-1">
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-30 flex w-64 flex-col border-r bg-card transition-transform duration-200 md:static md:translate-x-0',
+          mobileNavOpen ? 'translate-x-0' : '-translate-x-full',
+          !sidebarOpen && 'md:w-17'
+        )}
+      >
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -841,38 +909,47 @@ export function Sidebar() {
                 key={item.to}
                 to={item.to}
                 end={item.to === '/dashboard'}
+                onClick={() => setMobileNavOpen(false)}
+                title={!sidebarOpen ? item.label : undefined}
                 className={({ isActive }) =>
                   cn(
-                    'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-primary text-primary-foreground'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
                   )
                 }
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                {sidebarOpen && <span>{item.label}</span>}
+                <Icon className="h-4.5 w-4.5 shrink-0" />
+                {sidebarOpen && <span className="truncate">{item.label}</span>}
               </NavLink>
             );
           })}
         </nav>
-      </div>
 
-      {sidebarOpen && (
-        <div className="p-4 border-t bg-muted/40">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Port 3031 • Live Dev</span>
-          </div>
+        {/* Desktop collapse toggle — the only way to shrink the sidebar to an icon rail */}
+        <div className="border-t p-3">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="hidden w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:flex"
+            aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
+            {sidebarOpen ? (
+              <PanelLeftClose className="h-4.5 w-4.5 shrink-0" />
+            ) : (
+              <PanelLeftOpen className="h-4.5 w-4.5 shrink-0" />
+            )}
+            {sidebarOpen && <span>Collapse</span>}
+          </button>
         </div>
-      )}
-    </aside>
+      </aside>
+    </>
   );
 }
 """
 
-CLIENT_LAYOUT_TSX = """import React from 'react';
-import { Outlet } from 'react-router-dom';
+CLIENT_LAYOUT_TSX = """import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 
@@ -891,8 +968,7 @@ export default function AppLayout() {
 }
 """
 
-CLIENT_PAGE_LANDING_TSX = """import React from 'react';
-import { Link } from 'react-router-dom';
+CLIENT_PAGE_LANDING_TSX = """import { Link } from 'react-router-dom';
 import { ArrowRight, Zap, Layers, BarChart3, ShieldCheck } from 'lucide-react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Button } from '@/components/ui/button';
@@ -904,38 +980,47 @@ export default function Landing() {
       <Navbar />
 
       {/* Hero Section */}
-      <section className="py-20 md:py-32 px-4 text-center max-w-5xl mx-auto flex flex-col items-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-primary text-xs font-medium mb-6">
-          <Zap className="h-3.5 w-3.5" />
-          <span>Vite 6 + React 19 + Tailwind v4 Stack</span>
+      <section className="relative overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 -top-40 -z-10 flex justify-center blur-3xl"
+        >
+          <div className="aspect-[1.2/1] w-240 bg-linear-to-tr from-primary/30 via-primary/10 to-transparent opacity-60 rounded-full" />
         </div>
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 bg-gradient-to-r from-primary via-indigo-500 to-purple-600 bg-clip-text text-transparent">
-          The Modern Foundation for Feature-Driven SaaS
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-8">
-          A high-velocity, single-port full-stack architecture equipped with shadcn/ui primitives, typed Zustand state, and end-to-end verification.
-        </p>
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Button size="lg" asChild className="gap-2 shadow-lg shadow-primary/20">
-            <Link to="/dashboard">
-              Launch Dashboard <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link to="/login">Sign In</Link>
-          </Button>
+
+        <div className="py-24 md:py-36 px-4 text-center max-w-5xl mx-auto flex flex-col items-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border bg-card/60 text-muted-foreground text-xs font-medium mb-6">
+            <Zap className="h-3.5 w-3.5 text-primary" />
+            <span>Vite 6 + React 19 + Tailwind v4 Stack</span>
+          </div>
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 text-balance">
+            The modern foundation for feature-driven SaaS
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mb-10 text-balance">
+            A high-velocity, single-port full-stack architecture equipped with shadcn/ui primitives, typed Zustand state, and end-to-end verification.
+          </p>
+          <div className="flex flex-wrap gap-3 justify-center">
+            <Button size="lg" asChild className="gap-2 shadow-lg shadow-primary/20">
+              <Link to="/dashboard">
+                Launch Dashboard <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link to="/login">Sign In</Link>
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Feature Grid */}
-      <section className="py-16 bg-muted/30 border-y px-4">
+      <section className="py-20 border-t px-4">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Engineered for Rapid Domain Expansion</h2>
+          <div className="text-center mb-14">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Engineered for rapid domain expansion</h2>
             <p className="text-muted-foreground mt-2">Everything you need to turn raw agent intelligence into a robust live product.</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card>
+          <div className="grid md:grid-cols-3 gap-5">
+            <Card className="transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary mb-2">
                   <Layers className="h-5 w-5" />
@@ -944,7 +1029,7 @@ export default function Landing() {
                 <CardDescription>Unified Express backend that serves API endpoints and bundles React statically without CORS friction.</CardDescription>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="h-10 w-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-2">
                   <ShieldCheck className="h-5 w-5" />
@@ -953,7 +1038,7 @@ export default function Landing() {
                 <CardDescription>Pre-configured Vitest, Supertest, TypeScript checks, and shared Zod contracts enable autonomous self-correction.</CardDescription>
               </CardHeader>
             </Card>
-            <Card>
+            <Card className="transition-shadow hover:shadow-md">
               <CardHeader>
                 <div className="h-10 w-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 mb-2">
                   <BarChart3 className="h-5 w-5" />
@@ -977,8 +1062,9 @@ export default function Landing() {
 
 CLIENT_PAGE_LOGIN_TSX = """import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layers, ArrowRight, Lock, Mail } from 'lucide-react';
+import { Layers, ArrowRight, Lock, Mail, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
+import { apiRequest, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -987,23 +1073,26 @@ export default function Login() {
   const [email, setEmail] = useState('alex@example.com');
   const [password, setPassword] = useState('password123');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { setUser, setToken } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setUser({
-        id: 'usr_demo_1',
-        email,
-        name: 'Alex Rivera',
-        role: 'admin',
+    setError(null);
+    try {
+      const res = await apiRequest<{ user: any; token: string }>('/api/auth/login', {
+        data: { email, password },
       });
-      setToken('mock_jwt_token_alex');
-      setLoading(false);
+      setUser(res.user);
+      setToken(res.token);
       navigate('/dashboard');
-    }, 400);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1018,6 +1107,12 @@ export default function Login() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <div className="flex items-center gap-2 rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Email</label>
               <div className="relative">
@@ -1065,8 +1160,9 @@ export default function Login() {
 
 CLIENT_PAGE_SIGNUP_TSX = """import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layers, ArrowRight, Lock, Mail, User as UserIcon } from 'lucide-react';
+import { Layers, ArrowRight, Lock, Mail, User as UserIcon, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
+import { apiRequest, ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -1076,23 +1172,26 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { setUser, setToken } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setUser({
-        id: `usr_${Date.now()}`,
-        email,
-        name,
-        role: 'user',
+    setError(null);
+    try {
+      const res = await apiRequest<{ user: any; token: string }>('/api/auth/register', {
+        data: { name, email, password },
       });
-      setToken(`mock_token_${Date.now()}`);
-      setLoading(false);
+      setUser(res.user);
+      setToken(res.token);
       navigate('/dashboard');
-    }, 400);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Unable to create your account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -1107,6 +1206,12 @@ export default function Signup() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {error && (
+              <div className="flex items-center gap-2 rounded-md bg-destructive/10 text-destructive text-sm px-3 py-2">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Full Name</label>
               <div className="relative">
@@ -1167,21 +1272,21 @@ export default function Signup() {
 }
 """
 
-CLIENT_PAGE_DASHBOARD_TSX = """import React from 'react';
-import { Activity, Users, CreditCard, TrendingUp, Sparkles, Plus, ArrowUpRight } from 'lucide-react';
+CLIENT_PAGE_DASHBOARD_TSX = """import { Activity, Users, CreditCard, TrendingUp, Sparkles, Plus, ArrowUpRight } from 'lucide-react';
 import { useAuthStore } from '@/lib/state';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function Dashboard() {
   const { user } = useAuthStore();
 
   const metrics = [
-    { label: 'Active Users', value: '2,845', change: '+14.2%', icon: Users, positive: true },
-    { label: 'Monthly Recurring Revenue', value: '$24,500', change: '+8.1%', icon: CreditCard, positive: true },
-    { label: 'System Health / Uptime', value: '99.98%', change: 'Normal', icon: Activity, positive: true },
-    { label: 'Feature Invocations', value: '184,200', change: '+22.4%', icon: TrendingUp, positive: true },
+    { label: 'Active Users', value: '2,845', change: '+14.2%', icon: Users, tint: 'bg-primary/10 text-primary' },
+    { label: 'Monthly Recurring Revenue', value: '$24,500', change: '+8.1%', icon: CreditCard, tint: 'bg-indigo-500/10 text-indigo-500' },
+    { label: 'System Health / Uptime', value: '99.98%', change: 'Normal', icon: Activity, tint: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' },
+    { label: 'Feature Invocations', value: '184,200', change: '+22.4%', icon: TrendingUp, tint: 'bg-purple-500/10 text-purple-500' },
   ];
 
   const recentActivity = [
@@ -1212,15 +1317,17 @@ export default function Dashboard() {
           const Icon = m.icon;
           return (
             <Card key={m.label}>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <span className="text-sm font-medium text-muted-foreground">{m.label}</span>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{m.value}</div>
-                <div className="flex items-center text-xs text-emerald-500 mt-1">
-                  <ArrowUpRight className="h-3.5 w-3.5 mr-0.5" />
-                  <span>{m.change} from last period</span>
+              <CardContent className="flex items-center justify-between p-5">
+                <div>
+                  <p className="text-sm text-muted-foreground">{m.label}</p>
+                  <p className="mt-1 text-2xl font-semibold tracking-tight">{m.value}</p>
+                  <div className="flex items-center text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                    <ArrowUpRight className="h-3.5 w-3.5 mr-0.5" />
+                    <span>{m.change} from last period</span>
+                  </div>
+                </div>
+                <div className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-full', m.tint)}>
+                  <Icon className="h-5 w-5" />
                 </div>
               </CardContent>
             </Card>
@@ -1283,6 +1390,153 @@ export default function Dashboard() {
 }
 """
 
+CLIENT_PAGE_SETTINGS_TSX = """import { useState, FormEvent } from 'react';
+import { Check, Loader2, User as UserIcon } from 'lucide-react';
+import { useAuthStore } from '@/lib/state';
+import { apiRequest } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+
+export default function Settings() {
+  const { user, setUser } = useAuthStore();
+  const [name, setName] = useState(user?.name ?? '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const res = await apiRequest<{ user: Record<string, unknown> }>('/api/auth/me', {
+        method: 'PATCH',
+        data: { name },
+      });
+      if (user) {
+        setUser({ ...user, ...res.user, name: (res.user.name as string) ?? name });
+      }
+      setSaved(true);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="max-w-lg space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <p className="text-muted-foreground">Manage your account profile.</p>
+      </div>
+
+      <Card>
+        <form onSubmit={handleSubmit}>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <UserIcon className="h-5 w-5 text-primary" /> Profile
+            </CardTitle>
+            <CardDescription>Update the name shown across your workspace.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground" htmlFor="settings-name">
+                Full name
+              </label>
+              <Input
+                id="settings-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                minLength={2}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground" htmlFor="settings-email">
+                Email
+              </label>
+              <Input id="settings-email" value={user?.email ?? ''} disabled />
+            </div>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+          </CardContent>
+          <CardFooter className="flex items-center gap-3">
+            <Button type="submit" disabled={saving || name.trim().length < 2} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+              {saving ? 'Saving...' : 'Save changes'}
+            </Button>
+            {saved && <span className="text-sm text-emerald-600 dark:text-emerald-400">Saved</span>}
+          </CardFooter>
+        </form>
+      </Card>
+    </div>
+  );
+}
+"""
+
+CLIENT_PAGE_TEAM_TSX = """import { useEffect, useState } from 'react';
+import { Shield } from 'lucide-react';
+import { apiRequest } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+
+interface TeamUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export default function TeamUsers() {
+  const [users, setUsers] = useState<TeamUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiRequest<{ users: TeamUser[] }>('/api/users')
+      .then((res) => setUsers(res.users))
+      .catch((err) => setError(err?.message || 'Failed to load users'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Team & Users</h1>
+        <p className="text-muted-foreground">Everyone with access to this workspace.</p>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading team...</p>
+      ) : error ? (
+        <p className="text-sm text-destructive">{error}</p>
+      ) : (
+        <div className="grid sm:grid-cols-2 gap-4">
+          {users.map((u) => (
+            <Card key={u.id}>
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                  {u.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate">{u.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                </div>
+                <Badge variant={u.role === 'admin' ? 'default' : 'outline'} className="gap-1 capitalize">
+                  <Shield className="h-3 w-3" /> {u.role}
+                </Badge>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+"""
+
 CLIENT_TEST_SETUP_TS = """import '@testing-library/jest-dom';
 import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
@@ -1294,7 +1548,6 @@ afterEach(() => {
 
 CLIENT_TEST_BUTTON_TSX = """import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { Button } from '../button';
 
 describe('Button Component', () => {
@@ -1313,7 +1566,6 @@ describe('Button Component', () => {
 
 CLIENT_TEST_CARD_TSX = """import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../card';
 
 describe('Card Component', () => {
@@ -1360,6 +1612,8 @@ SERVER_TSCONFIG = """{
     "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
+    "rootDir": "..",
+    "outDir": "../dist",
     "baseUrl": "..",
     "paths": {
       "@shared/*": ["shared/*"]
@@ -1393,7 +1647,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/health', healthRoutes);
 
 // Static Client Serving in Unified Port Mode
-const clientDistPath = path.resolve(__dirname, '../../dist/client');
+// server.ts always runs from `server/` (via tsx in both dev and start scripts),
+// so one `..` reaches the repo root, where the client build outputs to `dist/client`.
+const clientDistPath = path.resolve(__dirname, '../dist/client');
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get('*', (req: Request, res: Response) => {
@@ -1434,7 +1690,7 @@ export default router;
 """
 
 SERVER_ROUTE_AUTH_TS = """import { Router } from 'express';
-import { login, register, getCurrentUser } from '../controllers/authController.js';
+import { login, register, getCurrentUser, updateCurrentUser } from '../controllers/authController.js';
 import { requireAuth } from '../middleware/authMiddleware.js';
 
 const router = Router();
@@ -1442,6 +1698,7 @@ const router = Router();
 router.post('/login', login);
 router.post('/register', register);
 router.get('/me', requireAuth, getCurrentUser);
+router.patch('/me', requireAuth, updateCurrentUser);
 
 export default router;
 """
@@ -1459,7 +1716,11 @@ export default router;
 """
 
 SERVER_CONTROLLER_AUTH_TS = """import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
 import { readJsonFile, writeJsonFile } from '../utils/fileStorage.js';
+import { updateProfileSchema } from '../../shared/schemas/authSchema.js';
+
+const PASSWORD_HASH_ROUNDS = 10;
 
 export async function login(req: Request, res: Response): Promise<void> {
   const { email, password } = req.body;
@@ -1471,7 +1732,7 @@ export async function login(req: Request, res: Response): Promise<void> {
   const users = await readJsonFile<any[]>('users.json', []);
   const user = users.find((u) => u.email === email);
 
-  if (!user) {
+  if (!user || !(await bcrypt.compare(password, user.password))) {
     res.status(401).json({ error: 'Invalid credentials' });
     return;
   }
@@ -1504,7 +1765,7 @@ export async function register(req: Request, res: Response): Promise<void> {
     id: `usr_${Date.now()}`,
     email,
     name,
-    password,
+    password: await bcrypt.hash(password, PASSWORD_HASH_ROUNDS),
     role: 'user',
     createdAt: new Date().toISOString(),
   };
@@ -1519,7 +1780,32 @@ export async function register(req: Request, res: Response): Promise<void> {
 }
 
 export async function getCurrentUser(req: Request, res: Response): Promise<void> {
-  res.json({ user: (req as any).user });
+  const { password, ...sanitized } = (req as any).user ?? {};
+  res.json({ user: sanitized });
+}
+
+export async function updateCurrentUser(req: Request, res: Response): Promise<void> {
+  const parsed = updateProfileSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error.issues[0]?.message ?? 'Invalid profile payload' });
+    return;
+  }
+
+  const currentUserId = (req as any).user?.id;
+  const users = await readJsonFile<any[]>('users.json', []);
+  const index = users.findIndex((u) => u.id === currentUserId);
+
+  if (index === -1) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  const updated = { ...users[index], ...parsed.data };
+  users[index] = updated;
+  await writeJsonFile('users.json', users);
+
+  const { password, ...sanitized } = updated;
+  res.json({ user: sanitized });
 }
 """
 
@@ -1561,18 +1847,18 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const sessions = await readJsonFile<any[]>('sessions.json', []);
   const session = sessions.find((s) => s.token === token);
 
-  if (!session && !token.startsWith('mock_jwt_token')) {
+  if (!session) {
     res.status(401).json({ error: 'Invalid or expired session token.' });
     return;
   }
 
   const users = await readJsonFile<any[]>('users.json', []);
-  const user = users.find((u) => u.id === (session ? session.userId : 'usr_demo_1')) || {
-    id: 'usr_demo_1',
-    email: 'alex@example.com',
-    name: 'Alex Rivera',
-    role: 'admin',
-  };
+  const user = users.find((u) => u.id === session.userId);
+
+  if (!user) {
+    res.status(401).json({ error: 'Invalid or expired session token.' });
+    return;
+  }
 
   (req as any).user = user;
   next();
@@ -1610,40 +1896,47 @@ export async function writeJsonFile<T>(filename: string, data: T): Promise<void>
 }
 """
 
-SERVER_SEED_USERS_TS = """import { writeJsonFile } from '../utils/fileStorage.js';
+SERVER_SEED_USERS_TS = """import bcrypt from 'bcryptjs';
+import { writeJsonFile } from '../utils/fileStorage.js';
 
-const DEMO_USERS = [
-  {
-    id: 'usr_demo_1',
-    email: 'alex@example.com',
-    name: 'Alex Rivera',
-    password: 'password123',
-    role: 'admin',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'usr_demo_2',
-    email: 'sarah@example.com',
-    name: 'Sarah Chen',
-    password: 'password123',
-    role: 'user',
-    createdAt: new Date().toISOString(),
-  },
-];
-
-const DEMO_SESSIONS = [
-  {
-    token: 'mock_jwt_token_alex',
-    userId: 'usr_demo_1',
-    createdAt: new Date().toISOString(),
-  },
-];
+const DEMO_PASSWORD = 'password123';
+const PASSWORD_HASH_ROUNDS = 10;
 
 async function seed() {
   console.log('🌱 Seeding demo users and sessions into /data...');
+
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, PASSWORD_HASH_ROUNDS);
+
+  const DEMO_USERS = [
+    {
+      id: 'usr_demo_1',
+      email: 'alex@example.com',
+      name: 'Alex Rivera',
+      password: passwordHash,
+      role: 'admin',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'usr_demo_2',
+      email: 'sarah@example.com',
+      name: 'Sarah Chen',
+      password: passwordHash,
+      role: 'user',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
+  const DEMO_SESSIONS = [
+    {
+      token: 'mock_jwt_token_alex',
+      userId: 'usr_demo_1',
+      createdAt: new Date().toISOString(),
+    },
+  ];
+
   await writeJsonFile('users.json', DEMO_USERS);
   await writeJsonFile('sessions.json', DEMO_SESSIONS);
-  console.log('✅ Seeding complete!');
+  console.log(`✅ Seeding complete! Demo login: alex@example.com / ${DEMO_PASSWORD}`);
 }
 
 seed();
@@ -1652,6 +1945,7 @@ seed();
 SERVER_TEST_AUTH_TS = """import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import { app } from '../server.js';
+import { readJsonFile, writeJsonFile } from '../utils/fileStorage.js';
 
 describe('Auth & Health API Integration Tests', () => {
   it('GET /api/health returns status healthy', async () => {
@@ -1663,6 +1957,73 @@ describe('Auth & Health API Integration Tests', () => {
   it('POST /api/auth/login fails with missing credentials', async () => {
     const res = await request(app).post('/api/auth/login').send({});
     expect(res.status).toBe(400);
+  });
+
+  it('POST /api/auth/login rejects an incorrect password for a known email', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'alex@example.com', password: 'definitely-the-wrong-password' });
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('POST /api/auth/login rejects an unknown email', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'nobody@example.com', password: 'password123' });
+    expect(res.status).toBe(401);
+  });
+
+  it('POST /api/auth/login succeeds with the correct password and issues a real session', async () => {
+    const res = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'alex@example.com', password: 'password123' });
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBeDefined();
+    expect(res.body.user.email).toBe('alex@example.com');
+    expect(res.body.user.password).toBeUndefined();
+
+    // Clean up — login() appends a session row; remove it so repeated test
+    // runs don't accumulate garbage in data/sessions.json.
+    const sessions = await readJsonFile<any[]>('sessions.json', []);
+    await writeJsonFile(
+      'sessions.json',
+      sessions.filter((s) => s.token !== res.body.token)
+    );
+  });
+
+  it('rejects a forged bearer token that was never actually issued a session', async () => {
+    // Regression test: requireAuth must never special-case a token by its
+    // string prefix. Only an exact match in sessions.json may authenticate.
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', 'Bearer mock_jwt_token_this_was_never_issued_by_the_server');
+    expect(res.status).toBe(401);
+  });
+
+  it('PATCH /api/auth/me rejects a name that is too short', async () => {
+    const res = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', 'Bearer mock_jwt_token_alex')
+      .send({ name: 'A' });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('PATCH /api/auth/me updates the current user profile name', async () => {
+    const AUTH = 'Bearer mock_jwt_token_alex';
+    const before = await request(app).get('/api/auth/me').set('Authorization', AUTH);
+    const originalName = before.body.user.name;
+
+    const updateRes = await request(app)
+      .patch('/api/auth/me')
+      .set('Authorization', AUTH)
+      .send({ name: 'Integration Test User' });
+    expect(updateRes.status).toBe(200);
+    expect(updateRes.body.user.name).toBe('Integration Test User');
+
+    // Clean up — leaves data/users.json exactly as it started.
+    await request(app).patch('/api/auth/me').set('Authorization', AUTH).send({ name: originalName });
   });
 });
 """
@@ -1693,8 +2054,14 @@ export const registerSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+export const updateProfileSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').optional(),
+  email: z.string().email('Invalid email address').optional(),
+});
+
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 """
 
 SHARED_COMMON_SCHEMA_TS = """import { z } from 'zod';
@@ -1792,12 +2159,19 @@ DOC_IMPLEMENTATION_SUMMARY = """# 📑 Implementation Summary
 - **Backend**: Express + TSX on port 3031
 """
 
+# bcrypt hash of the documented demo password "password123" (cost factor 10),
+# generated once with the `bcryptjs` package this scaffold ships as a
+# dependency and verified with bcrypt.compareSync('password123', hash) === true.
+# scaffold_saas.py itself never computes or needs a bcrypt implementation —
+# this is a static, pre-verified string, same as any other seed-data literal.
+DEMO_PASSWORD_HASH = "$2a$10$ao39YLoNn5U4/xj3aXw2ve6pGuM1Mv4hMNOM/z9IM4K/.fDA/q4jS"
+
 DATA_USERS_JSON = json.dumps([
   {
     "id": "usr_demo_1",
     "email": "alex@example.com",
     "name": "Alex Rivera",
-    "password": "password123",
+    "password": DEMO_PASSWORD_HASH,
     "role": "admin",
     "createdAt": "2026-08-29T20:00:00.000Z"
   }
@@ -1855,6 +2229,8 @@ def scaffold_saas_app(target_dir: Path, app_name: str, port: int = 3031) -> None
         "client/src/pages/Login.tsx": CLIENT_PAGE_LOGIN_TSX,
         "client/src/pages/Signup.tsx": CLIENT_PAGE_SIGNUP_TSX,
         "client/src/pages/Dashboard.tsx": CLIENT_PAGE_DASHBOARD_TSX,
+        "client/src/pages/TeamUsers.tsx": CLIENT_PAGE_TEAM_TSX,
+        "client/src/pages/Settings.tsx": CLIENT_PAGE_SETTINGS_TSX,
         "client/src/test/setup.ts": CLIENT_TEST_SETUP_TS,
         "client/src/components/ui/__tests__/button.test.tsx": CLIENT_TEST_BUTTON_TSX,
         "client/src/components/ui/__tests__/card.test.tsx": CLIENT_TEST_CARD_TSX,

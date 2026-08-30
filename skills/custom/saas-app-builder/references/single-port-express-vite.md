@@ -42,7 +42,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 
 // 2. Static Client Fallback
-const clientDistPath = path.resolve(__dirname, '../../dist/client');
+// server.ts always runs from `server/` (via tsx, in both `npm run dev` and
+// `npm start`) — it never actually runs from a compiled dist/server/ output.
+// So `__dirname` is `<repo>/server`, and one `..` reaches the repo root,
+// where the client build outputs to `dist/client`.
+const clientDistPath = path.resolve(__dirname, '../dist/client');
 if (fs.existsSync(clientDistPath)) {
   app.use(express.static(clientDistPath));
   app.get('*', (req: Request, res: Response) => {
@@ -52,6 +56,8 @@ if (fs.existsSync(clientDistPath)) {
   });
 }
 ```
+
+**Common mistake**: using `../../dist/client` here (i.e. assuming `server.ts` runs from a compiled `dist/server/` location). It doesn't — `tsx` always executes the TypeScript source directly from `server/`. Getting this path wrong doesn't throw; `fs.existsSync` just returns `false` and the server silently falls back to its API-only dev-mode response, so *every* client route (`/`, `/dashboard`, `/login`, ...) 404s or returns the JSON fallback instead of the SPA — a symptom that's easy to misdiagnose as a build or routing problem. Always verify with a live check after `npm run build`: hit a client-only route directly (e.g. `curl -I http://localhost:3031/dashboard`) and confirm it returns the SPA's `index.html` (HTTP 200), not a 404 or the JSON dev-mode payload.
 
 ---
 

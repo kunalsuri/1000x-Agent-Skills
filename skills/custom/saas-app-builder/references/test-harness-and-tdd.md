@@ -67,7 +67,6 @@ describe('Invoices API', () => {
 // client/src/features/invoices/__tests__/InvoiceCard.test.tsx
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
 import { InvoiceCard } from '../components/InvoiceCard';
 
 describe('InvoiceCard', () => {
@@ -83,5 +82,25 @@ describe('InvoiceCard', () => {
     expect(screen.getByText('Acme Corp')).toBeInTheDocument();
     expect(screen.getByText('$1,500')).toBeInTheDocument();
   });
+});
+```
+
+---
+
+## ⚠️ File-Backed Storage & Test Isolation
+
+`readJsonFile` / `writeJsonFile` operate on plain `data/*.json` files with no locking. `vitest.config.ts` sets `fileParallelism: false` for exactly this reason — running test files in parallel lets one suite's write interleave with another suite's read of the same file (e.g. two domain test files both touching a shared `projects.json`), which surfaces as an intermittent `Unexpected end of JSON input` failure. Leave `fileParallelism: false` in place when adding new domain test files; do not re-enable it to "speed up" `npm test`.
+
+Because tests run against the same `data/*.json` files as `npm run dev`, write **self-cleaning** integration tests for create/update/delete flows so repeated `npm test` runs don't leave garbage in the seed data:
+
+```ts
+it('creates, updates, and deletes an item', async () => {
+  const createRes = await request(app).post('/api/invoices').set('Authorization', AUTH).send({ /* ... */ });
+  const { id } = createRes.body.invoice;
+
+  await request(app).patch(`/api/invoices/${id}`).set('Authorization', AUTH).send({ status: 'paid' });
+
+  // Clean up — leaves data/invoices.json exactly as it started.
+  await request(app).delete(`/api/invoices/${id}`).set('Authorization', AUTH);
 });
 ```

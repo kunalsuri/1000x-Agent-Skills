@@ -4,41 +4,63 @@
   "version": "1.0.0",
   "attestation_status": "VERIFIED",
   "attested_by": "Kunal Suri",
-  "attestation_date": "2026-08-29",
+  "attestation_date": "2026-08-30",
   "tested_platforms": [
     {
       "platform": "Claude Code",
-      "model": "claude-3-7-sonnet",
+      "model": "claude-sonnet-5",
       "status": "PASS",
-      "notes": "Verified full monorepo scaffolding, single-port Express serving, and Vitest test harness generation."
+      "notes": "v1.1.0: full end-to-end run (Task/Project Tracker domain) surfaced 4 real bugs in the v1.0.0 scaffold output itself — unused `React` imports failing `tsc --noEmit` under `noUnusedLocals` (9 files), a Vitest parallel-file race corrupting the shared JSON storage (`Unexpected end of JSON input`), a wrong relative path in `server.ts`'s static-client fallback (`../../dist/client` instead of `../dist/client`, silently breaking every client route in production), and a missing `outDir`/`rootDir` in `server/tsconfig.json` causing `npm run build` to emit stray `.js` files into `server/`/`shared/`. All four are now fixed in `scripts/scaffold_saas.py` and the `references/` docs; re-verified by scaffolding a second, independent app from the patched script and confirming `npm run verify`, `npm run build`, and a live single-port SPA+API smoke test all pass with zero manual fixes.\n\nv1.2.0: user-reported follow-up (clicking any sidebar link besides Overview bounced to the landing page; no way to rename the account) traced to the v1.0.0/v1.1.0 `Sidebar.tsx` template shipping 5 nav items (`Overview`, `Domain Features`, `Analytics`, `Team & Users`, `Settings`) while `App.tsx` only ever registered a route for `/dashboard` — the other 4 fell through to the catch-all `<Navigate to=\"/\" />`. There was also no `PATCH` endpoint or UI anywhere for editing the current user's name, and `GET /api/auth/me` leaked the plaintext `password` field (the only user-returning endpoint that didn't sanitize it). Fixed by trimming `Sidebar.tsx` to only the 3 nav items that now have real backing (`Overview`, `Team & Users`, `Settings`), adding working `TeamUsers.tsx` and `Settings.tsx` pages wired into `App.tsx`, adding `GET`/`PATCH /api/auth/me` with a `updateProfileSchema` Zod contract and self-cleaning Supertest coverage, and sanitizing `getCurrentUser`. Re-verified the same way as v1.1.0 (independent scaffold + live curl checks of every nav route + a live profile-rename round-trip), then ported the identical fix into the already-running demo app.\n\nv1.3.0 (the big one): user reported the app 'doesn't look modern' and 'not way to hide the sidebar'. Root cause was far larger than styling taste — `client/src/index.css` defined every shadcn/ui color token (`--primary`, `--card`, `--muted-foreground`, etc.) on a bare `:root`/`.dark`, never inside an `@theme` block. Tailwind v4 only promotes `@theme`-registered custom properties into real utility classes; a bare `:root` declaration compiles with zero errors and silently drops the utility. Confirmed empirically: `dist/client/assets/*.css` had zero `.bg-primary`, zero `.bg-card` rules — every button, card, badge, and border in the entire app had been rendering unstyled since v1.0.0, through every prior 'PASS' on every platform below. This is why it looked flat/dated: it wasn't a palette problem, the palette never rendered at all. Fixed by adding the required `@theme inline` mapping block, switching tokens to OKLCH (matching the landing page's own copy, which had been claiming 'OKLCH theme variables' the whole time despite shipping raw HSL), refreshing the palette (indigo-violet primary, 0.75rem radius) and re-verified with a grep-based CSS assertion plus live Playwright screenshots in both themes on an independently-scaffolded app. Separately fixed the reported sidebar-collapse gap: `sidebarOpen` was one boolean serving both the desktop icon-rail collapse and the mobile drawer overlay, and the only toggle button for it was `md:hidden` (mobile-only) — there was no way to actually collapse it on desktop. Split into `sidebarOpen` (desktop, toggle now lives in `Sidebar.tsx`, always visible on desktop) and `mobileNavOpen` (mobile drawer, hamburger in `Navbar.tsx`, with a backdrop). Also polished Dashboard stat tiles (tinted icon badges) and the Landing hero (subtle background glow). Live-screenshotted and confirmed in both light and dark mode on a fresh independent scaffold before porting into the running demo app.",
+      "previous_status_note": "Neither the prior PASS for v1.0.0 nor the v1.1.0/v1.2.0 fixes caught the missing-`@theme` defect — `npm run verify` (tsc + vitest) has no way to detect that a Tailwind utility class compiled to nothing, and none of the fixes through v1.2.0 ever inspected the built CSS output, only its presence/absence of errors. Phase 1's baseline check now greps the compiled CSS for `.bg-primary`/`.bg-card` and requires them to be present, specifically because 'the build succeeded' proved nothing about whether the design system actually rendered.\n\nv1.5.0 (auth was theater): an independent strict-judge review of the full skill (not a user bug report this time) found that `requireAuth` in `authMiddleware.ts` treated any bearer token merely starting with the string `mock_jwt_token` as a valid session — even one the server had never issued — defaulting it to the admin demo user; and `login()` in `authController.ts` never checked the submitted password at all, only that a user with the given email existed. Both were confirmed exploitable with nothing more than `curl` against a freshly-built, untouched scaffold: `curl .../api/auth/me -H \"Authorization: Bearer mock_jwt_token_anything_i_want\"` returned the admin user, and `POST /api/auth/login` with any known email and a wrong password returned a valid session token. Root cause: `Login.tsx`/`Signup.tsx` never called the real `/api/auth/login`/`/api/auth/register` endpoints — they faked success client-side with a `setTimeout` and a hardcoded token, so the backend's actual auth logic was never exercised by the app itself, only by tests and manual curl, and the prefix bypass existed only to make that fake flow's hardcoded `mock_jwt_token_alex` string 'work' against the real backend. Passwords were also stored and compared in plaintext in `data/users.json` — no hashing anywhere in `register()`. Fixed by: removing the token-prefix bypass entirely (an exact `sessions.json` match is now required, no fallback); adding `bcrypt.compare` to `login()` and `bcrypt.hash` to `register()` (new `bcryptjs` dependency, chosen over native `bcrypt` for zero native-build-step risk in a scaffolding tool); rehashing the static `data/users.json` seed and `seedUsers.ts` to a real bcrypt hash instead of the literal string `password123`; and wiring `Login.tsx`/`Signup.tsx` to actually call the backend via `apiRequest`, surfacing a rejected `ApiError` instead of always succeeding. Re-verified by scaffolding a fresh, independent app from the patched script: `npm run verify` (13/13 tests, including 4 new regression tests — wrong password rejected, unknown email rejected, correct password succeeds with a real session, and a forged `mock_jwt_token`-prefixed token that was never issued is rejected), `npm run build`, the CSS-token grep, and live curl round-trips confirming (a) a forged token now 401s, (b) a wrong password now 401s, (c) the documented demo flow (`Bearer mock_jwt_token_alex`, which is a real pre-seeded session, not a bypass) still 200s, and (d) register → wrong-password-login-fails → correct-password-login-succeeds all behave correctly end to end with the password hashed on disk. Nothing else regressed: nav/route parity, CSS tokens, tsconfig outDir/rootDir, and password-sanitization-on-read all reconfirmed unchanged."
     },
     {
       "platform": "Google Antigravity",
       "model": "gemini-3.7-flash",
       "status": "PASS",
-      "notes": "Verified Tailwind CSS v4 setup, shadcn UI component primitives, and autonomous verification loop."
+      "notes": "Verified Tailwind CSS v4 setup, shadcn UI component primitives, and autonomous verification loop.",
+      "superseded_by_v1_3_0_note": "This 'Tailwind CSS v4 setup' verification predates the discovery (Claude Code, v1.3.0) that the scaffold's `@theme` registration was missing since v1.0.0, meaning no semantic color utility ever rendered. This PASS reflects that the build succeeded and the file existed, not that the design tokens produced visible styling — the two were conflated until the v1.3.0 fix added a build-output CSS assertion specifically because passing checks had been insufficient to catch this.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since. It predates both the v1.3.0 CSS-token fix (see superseded_by_v1_3_0_note) and the v1.5.0 auth fix (login not checking passwords, a hardcoded auth-bypass token prefix) — it provides no evidence about either on this platform. Treat it as historical, not current."
     },
     {
       "platform": "Cursor",
       "model": "claude-3.5-sonnet",
       "status": "PASS",
-      "notes": "Verified feature slice generation and Supertest API endpoint testing."
+      "notes": "Verified feature slice generation and Supertest API endpoint testing.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since. Its 'PASS' predates the v1.3.0 CSS-token fix and the v1.5.0 auth fix (see the Claude Code entries above) and should not be read as validating either on this platform — it has not been re-verified against the current scaffold."
     },
     {
       "platform": "OpenAI Codex",
       "model": "gpt-4o",
       "status": "PASS",
-      "notes": "Verified TypeScript compile check and shared Zod contract validation."
+      "notes": "Verified TypeScript compile check and shared Zod contract validation.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since. Its 'PASS' predates the v1.3.0 CSS-token fix and the v1.5.0 auth fix (see the Claude Code entries above) and should not be read as validating either on this platform — it has not been re-verified against the current scaffold."
     }
   ],
   "performance_summary": {
     "success_rate_percent": 100,
     "average_token_consumption": 1350,
-    "recovery_resilience": "High"
+    "recovery_resilience": "High",
+    "note": "success_rate_percent reflects test/typecheck pass rate, not visual/UX correctness — see the v1.3.0 Claude Code entry above for why that distinction matters for this skill specifically.",
+    "methodology_caveat": "average_token_consumption and recovery_resilience are illustrative, not the output of a documented, repeatable measurement (no run logs, no sample size, no definition of what 'recovery' was tested against). Unlike the platform PASS entries above, which describe specific reproducible checks, treat these two fields as approximate rather than as measured facts until a real methodology is attached."
   },
   "provenance": {
     "source_type": "original",
     "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
     "license": "Apache-2.0"
+  },
+  "security_audit": {
+    "tool": "scripts/audit_scaffold.py",
+    "method": "AST-based structural analysis of scaffold_saas.py (not a manual read or regex skim) — enumerates every import, flags network/process/dynamic-exec-capable modules, dangerous calls (eval/exec/subprocess-equivalents/file-deletion), obfuscation smells, and every literal URL in the file.",
+    "last_run_date": "2026-08-30",
+    "last_run_result": "PASS",
+    "re_run_note": "Re-run against the v1.5.0 edit (auth fixes — see the Claude Code platform entry above). Those edits only touched JS/TS *template* strings, not the Python generator's own imports or logic, so the result is byte-for-byte identical to the pre-v1.5.0 run: same 4 imports, same zero dangerous calls, same 10 URLs.",
+    "imports_found": ["argparse", "json", "pathlib", "sys"],
+    "disallowed_imports_found": [],
+    "dangerous_calls_found": [],
+    "obfuscation_smells_found": [],
+    "external_urls_found": 10,
+    "external_urls_note": "All 10 are inert strings inside generated-app templates, fetched later by a browser running the generated app, not calls scaffold_saas.py itself makes: 2 Google Fonts URLs (fonts.googleapis.com, one bare + one full stylesheet link), 1 fonts.gstatic.com, 1 Unsplash demo-avatar image, 1 the SVG XML namespace URI, 1 ui.shadcn.com's components.json schema reference, and 4 localhost references (http://localhost:${PORT} and http://localhost:3031 in template strings, including one caught mid-Markdown-link by the URL regex) that are dev-instructions text, not fetches at all. The script makes zero network calls.",
+    "reproduce": "python skills/custom/saas-app-builder/scripts/audit_scaffold.py skills/custom/saas-app-builder/scripts/scaffold_saas.py",
+    "note": "This is a point-in-time result, not a permanent guarantee. Re-run it yourself after any update to scaffold_saas.py, and on any copy of this skill before trusting it — don't rely on this field surviving an edit nobody re-attested."
   }
 }

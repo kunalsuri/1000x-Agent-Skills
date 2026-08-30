@@ -21,7 +21,8 @@ PACKAGE_MANIFEST = {
         "@radix-ui/react-slot": "^1.1.1",
         "zod": "^3.24.1",
         "express": "^4.21.2",
-        "cors": "^2.8.5"
+        "cors": "^2.8.5",
+        "bcryptjs": "^2.4.3"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
@@ -44,9 +45,15 @@ PACKAGE_MANIFEST = {
 
 1. **Update Pinned Versions**: Bump version strings in `PACKAGE_MANIFEST` within `scaffold_saas.py`.
 2. **Add New shadcn Primitives**: Add the component source code to `scaffold_saas.py` under the template section (e.g. `CLIENT_DIALOG_TSX`, `CLIENT_TABLE_TSX`).
-3. **Validate**:
+3. **Validate the generator itself**:
    ```bash
-   python scripts/validate_skills.py
+   python scripts/audit_scaffold.py scripts/scaffold_saas.py
    ```
-4. **Test Scaffolding**:
-   Run scaffolding in a temporary folder to verify clean generation.
+   (There is no `scripts/validate_skills.py` in this skill — that was a stale reference. `audit_scaffold.py` is this skill's own validator; see "Security & Auditability" in `SKILL.md`.)
+4. **Test Scaffolding**: Run scaffolding into a temporary folder and confirm clean generation:
+   ```bash
+   python scripts/scaffold_saas.py --name test-app --target-dir /tmp/test-app
+   cd /tmp/test-app && npm install && npm run verify && npm run build
+   grep -c '\.bg-primary\b' dist/client/assets/*.css   # must be > 0
+   ```
+   If you touched anything auth-related (`authController.ts`, `authMiddleware.ts`, `seedUsers.ts`, `DATA_USERS_JSON`), also re-run the live checks in `SKILL.md` Phase 5 step 3 plus a login round-trip (correct password succeeds, wrong password 401s) — `npm run verify` passing does not prove auth actually enforces anything; see the v1.5.0 entry in `attestation.json` for why that distinction mattered here before.
