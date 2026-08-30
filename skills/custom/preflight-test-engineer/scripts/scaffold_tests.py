@@ -137,7 +137,10 @@ import { describe, it, expect } from 'vitest';
 
 describe('Pre-Flight Smoke Sanity Suite', () => {
   it('should verify test runner environment is active', () => {
-    expect(true).toBe(true);
+    // Vitest sets NODE_ENV to 'test'. Asserting on it means this smoke test
+    // actually fails when the harness is misconfigured, which is the only
+    // reason to have a smoke test at all.
+    expect(process.env.NODE_ENV).toBe('test');
   });
 });
 '''
@@ -163,7 +166,16 @@ export function createMockEntity(overrides: Partial<SampleEntity> = {}): SampleE
 '''
 
 def generate_python_unit_test(module_name: str, functions: List[str], classes: List[Dict[str, Any]]) -> str:
-    """Generates a structured Python unit test file with parameterized cases and edge tests."""
+    """
+    Generate a structured Python unit test file with parameterized cases
+    and edge tests.
+
+    Scaffolded tests fail until someone writes them. An `assert True` body
+    makes an empty suite report green, which is worse than having no suite
+    at all: it produces a passing CI badge over zero verification, and
+    nothing ever prompts anyone to finish the job. `pytest.fail` keeps the
+    scaffold honest -- the suite stays red until the assertions are real.
+    """
     lines = [
         f'"""',
         f'Unit tests for module: {module_name}',
@@ -182,36 +194,36 @@ def generate_python_unit_test(module_name: str, functions: List[str], classes: L
         lines.append(f'    def test_{cname.lower()}_initialization(self) -> None:')
         lines.append(f'        """Verifies {cname} instantiates properly."""')
         lines.append(f'        # TODO: Instantiate with valid test arguments')
-        lines.append(f'        assert True')
+        lines.append(f'        pytest.fail("Unimplemented: {cname} instantiation test")')
         lines.append(f'')
         for m in cls.get("methods", []):
             lines.append(f'    def test_{m}_happy_path(self) -> None:')
             lines.append(f'        """Verifies {m} behavior under expected conditions."""')
             lines.append(f'        # TODO: Implement happy path assertion')
-            lines.append(f'        assert True')
+            lines.append(f'        pytest.fail("Unimplemented: {m} happy path")')
             lines.append(f'')
             lines.append(f'    def test_{m}_edge_cases(self) -> None:')
             lines.append(f'        """Verifies {m} handles boundary conditions and errors gracefully."""')
             lines.append(f'        # TODO: Test None/empty inputs, invalid types, boundary numbers')
-            lines.append(f'        assert True')
+            lines.append(f'        pytest.fail("Unimplemented: {m} edge cases")')
             lines.append(f'')
 
     for fn in functions:
         lines.append(f'def test_{fn}_success() -> None:')
         lines.append(f'    """Verifies {fn} execution with valid inputs."""')
         lines.append(f'    # TODO: Call {fn} and assert expected output')
-        lines.append(f'    assert True')
+        lines.append(f'    pytest.fail("Unimplemented: {fn} success case")')
         lines.append(f'')
         lines.append(f'def test_{fn}_boundary_and_negative_inputs() -> None:')
         lines.append(f'    """Verifies {fn} handles empty, None, and edge inputs."""')
         lines.append(f'    # TODO: Call {fn} with boundary arguments')
-        lines.append(f'    assert True')
+        lines.append(f'    pytest.fail("Unimplemented: {fn} boundary cases")')
         lines.append(f'')
 
     if not classes and not functions:
         lines.append(f'def test_{module_name}_placeholder() -> None:')
         lines.append(f'    """Placeholder test verifying {module_name} module loading."""')
-        lines.append(f'    assert True')
+        lines.append(f'    pytest.fail("Unimplemented: no functions or classes detected in {module_name}")')
         lines.append(f'')
 
     return "\n".join(lines)
@@ -233,19 +245,19 @@ def generate_ts_unit_test(module_name: str, functions: List[str]) -> str:
         lines.append(f"  describe('{fn}()', () => {{")
         lines.append(f"    it('should return expected result with standard inputs', () => {{")
         lines.append(f"      // TODO: Test happy path for {fn}")
-        lines.append(f"      expect(true).toBe(true);")
+        lines.append(f"      throw new Error('Unimplemented: {fn} happy path');")
         lines.append(f"    }});")
         lines.append(f"")
         lines.append(f"    it('should handle edge cases (null, empty, boundary)', () => {{")
         lines.append(f"      // TODO: Test negative and boundary cases for {fn}")
-        lines.append(f"      expect(true).toBe(true);")
+        lines.append(f"      throw new Error('Unimplemented: {fn} edge cases');")
         lines.append(f"    }});")
         lines.append(f"  }});")
         lines.append(f"")
 
     if not functions:
         lines.append(f"  it('should load module correctly', () => {{")
-        lines.append(f"    expect(true).toBe(true);")
+        lines.append(f"    throw new Error('Unimplemented: no exported functions detected');")
         lines.append(f"  }});")
 
     lines.append(f"}});")
@@ -266,18 +278,18 @@ import {{ describe, it, expect }} from 'vitest';
 describe('<{component_name} /> Component', () => {{
   it('renders without crashing', () => {{
     // render(<{component_name} />);
-    expect(true).toBe(true);
+    throw new Error('Unimplemented: <{component_name} /> render test');
   }});
 
   it('handles user interactions and event propagation', async () => {{
     // const user = userEvent.setup();
     // render(<{component_name} />);
-    expect(true).toBe(true);
+    throw new Error('Unimplemented: <{component_name} /> interaction test');
   }});
 
   it('renders with accessible roles and attributes', () => {{
     // Verify accessibility contracts
-    expect(true).toBe(true);
+    throw new Error('Unimplemented: <{component_name} /> accessibility test');
   }});
 }});
 '''

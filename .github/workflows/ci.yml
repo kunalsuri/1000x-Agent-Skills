@@ -1,4 +1,4 @@
-name: CI - Skill Doctor & Multi-Agent Validation
+name: CI
 
 on:
   push:
@@ -6,24 +6,87 @@ on:
   pull_request:
     branches: [ main ]
 
+# Least privilege: nothing in this workflow writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  validate:
-    name: Validate Skills & Attestation Specification
+  # The repository's own tooling is stdlib-only by design, so that anyone can
+  # audit a skill without first installing third-party code from a registry.
+  # This job runs the validators on a bare interpreter and fails if that ever
+  # stops being true -- the claim is load-bearing for the trust story, so it
+  # is tested rather than asserted in a README.
+  stdlib-only:
+    name: Audit with no dependencies installed
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Run Skill Doctor Validator
+      - name: Confirm no third-party packages are present
         run: |
-          python scripts/validate_skills.py
+          python - <<'PY'
+          import importlib.util, sys
+          for mod in ("jsonschema", "pytest", "yaml"):
+              if importlib.util.find_spec(mod):
+                  sys.exit(f"{mod} is installed; this job must run on a bare interpreter")
+          print("bare interpreter confirmed")
+          PY
 
-      - name: Run Pre-Flight Release Audit
+      - name: Skill safety audit
+        run: python scripts/audit_skill_safety.py --strict
+
+      - name: Content digest verification
+        run: python scripts/skill_digest.py --check
+
+      - name: Skill Doctor validator
+        run: python scripts/validate_skills.py
+
+  validate:
+    name: Validate skills (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install test dependencies
         run: |
-          python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      # Ordered cheapest and most security-relevant first, so a malicious
+      # change fails before anything else has a chance to run.
+      - name: Skill safety audit (capabilities and hidden instructions)
+        run: python scripts/audit_skill_safety.py --strict
+
+      - name: Content digest verification
+        run: python scripts/skill_digest.py --check
+
+      - name: Skill Doctor validator (schema, frontmatter, evals)
+        run: python scripts/validate_skills.py
+
+      - name: Pre-flight release audit
+        run: python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict
+
+      # The coverage floor is a ratchet: raise it as coverage improves, never
+      # lower it to make a red build green.
+      - name: Test suite
+        run: |
+          python -m pytest -q \
+            --cov=scripts --cov=skills --cov=utils \
+            --cov-report=term-missing \
+            --cov-fail-under=60

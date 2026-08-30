@@ -1,0 +1,16 @@
+# Default owner for everything in the repository.
+*                               @kunalsuri
+
+# Trust-critical paths. Changes here alter what the repository can promise
+# about the skills it publishes, so they should never merge unreviewed:
+# the safety auditor, the attestation schema and digest binding, the
+# reviewed-exemption list, the installer that writes outside the repo,
+# and the CI that enforces all of it.
+/scripts/audit_skill_safety.py  @kunalsuri
+/scripts/skill_digest.py        @kunalsuri
+/scripts/validate_skills.py     @kunalsuri
+/scripts/install_to_agent.py    @kunalsuri
+/docs/schemas/                  @kunalsuri
+/docs/safety-allowlist.json     @kunalsuri
+/docs/capability-declarations.json @kunalsuri
+/.github/workflows/             @kunalsuri

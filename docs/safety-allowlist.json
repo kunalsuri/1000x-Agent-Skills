@@ -1,0 +1,107 @@
+{
+  "$comment": "Reviewed exemptions for scripts/audit_skill_safety.py. Every entry is pinned to a content fingerprint: edit the line it covers and the fingerprint changes, the suppression stops applying, and the finding resurfaces for a fresh review. Suppressed findings are still printed by the auditor -- suppressed, never hidden. An entry may omit 'fingerprint' to cover a whole (path, check) pair, but that is much blunter and should be avoided.",
+  "entries": [
+    {
+      "path": ".agents/skills/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "2d16b3eeb52f3c43",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "3fedc05cbf3ed70c",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "8f577f6e78aaca29",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "d25b2630355465e3",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "fd020f85417d46c7",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "00c5dd8cfda2cdb3",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "16039232463473bf",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "bb2132debd43e880",
+      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+    },
+    {
+      "path": "scripts/install_to_agent.py",
+      "check": "CAP-OVERDECLARED",
+      "fingerprint": "9f15ffbea11a7dce",
+      "reason": "Deliberate over-declaration. The AST can prove this script deletes and writes directories, but not that the paths resolve under the user's HOME rather than the workspace. 'unrestricted' is the truthful label for a tool that replaces directories in ~/.claude/skills; tightening it to 'workspace-delete' would understate the real blast radius."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "13a3748e396f23fa",
+      "reason": "Reviewed 2026-08-30: a `curl` auth smoke-test against http://localhost:3031 using the obviously-fake credential \"wrong\". Localhost only; nothing leaves the machine."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "23d5fb02f069f800",
+      "reason": "Reviewed 2026-08-30: guidance requiring `password` to be stripped from every server response. This is an anti-exfiltration instruction, the opposite of the pattern being matched."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "500c0a3d6c8ed23d",
+      "reason": "Reviewed 2026-08-30: guidance requiring bcrypt hashing and comparison on login, documenting a CVE-shaped bug fixed in v1.5.0. Defensive instruction, no data movement."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "a2efc89131a35b6c",
+      "reason": "Reviewed 2026-08-30: prose describing the scaffold's own /api/auth/me endpoints. Flagged only because the 2-line window reaches the password guidance below it."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "check": "MD-CREDENTIAL-EXFIL",
+      "fingerprint": "b9ba804801b8f42a",
+      "reason": "Reviewed 2026-08-30: the paired localhost auth smoke-test using the seeded demo credential \"password123\". Localhost only; nothing leaves the machine."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "43dc3fd18000ad1d",
+      "reason": "Reviewed 2026-08-30: the literal detection pattern `re.compile(r\"fromCharCode\")` inside the detector's own pattern table."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "4501c2cf05ed6b97",
+      "reason": "Reviewed 2026-08-30: the detector's own report label listing the tokens it scans for."
+    },
+    {
+      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "a6db33693a7dd6e8",
+      "reason": "Reviewed 2026-08-30: audit_scaffold.py is itself an obfuscation detector; this is its docstring naming the token it searches for. Self-reference, not a payload."
+    }
+  ]
+}
