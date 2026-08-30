@@ -106,7 +106,7 @@ flowchart TD
 | **Trigger Evaluation** | Blind activation / high false triggers | **Positive and negative prompt datasets** (`evals/test-cases.json`), present and schema-checked for every skill. Automated scoring against a live model is not yet wired up — see [Enforced vs. recorded](#-enforced-vs-recorded) |
 | **Multi-Agent Parity** | Fragmented per IDE / out-of-sync instructions | **Synchronized across Claude Code, Antigravity, Cursor & Codex** |
 | **Deterministic Tooling** | Unassisted LLM hallucinations | **Integrated Python CLI engines + semantic LLM verification** |
-| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a 268-test pytest suite, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
+| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a 294-test pytest suite, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
 
 <br/>
 
@@ -150,7 +150,8 @@ python scripts/validate_skills.py
 Run them against a copy you downloaded, not just against this repository.
 CI runs the same three commands on a bare interpreter with no third-party
 packages installed, so the "no dependencies needed to audit" claim is itself
-tested rather than asserted.
+tested rather than asserted. (Or skip typing all three by hand — see
+[One-command setup & test](#one-command-setup-test-recommended) below.)
 
 <br/>
 
@@ -174,6 +175,98 @@ each pinned to a content fingerprint and a written justification. Edit the
 line an exemption covers and the fingerprint changes, the exemption stops
 applying, and the finding resurfaces for a fresh review. Suppressed findings
 are still printed — suppressed, never hidden.
+
+<br/>
+
+### 🖥️ One-command setup & test (recommended)
+
+Running the three commands above by hand, plus the release audit and the
+pytest suite, is exactly what `.github/workflows/ci.yml` does on every push.
+Two small scripts wrap that whole sequence into one command each — one pair
+for Linux/macOS, one for Windows — so a local "all green" predicts a green
+CI run instead of hoping for one.
+
+<table>
+<tr><th></th><th>Linux / macOS</th><th>Windows (PowerShell)</th></tr>
+<tr>
+<td><b>Set up once</b></td>
+<td><pre><code>./scripts/linux/dev-setup.sh</code></pre></td>
+<td><pre><code>.\scripts\win\dev-setup.ps1</code></pre></td>
+</tr>
+<tr>
+<td><b>Run every check</b></td>
+<td><pre><code>./scripts/linux/dev-test.sh</code></pre></td>
+<td><pre><code>.\scripts\win\dev-test.ps1</code></pre></td>
+</tr>
+</table>
+
+`dev-setup` creates `.venv/` at the repository root — or, if one already
+exists, just brings its packages up to date — so it is always safe to
+re-run. It uses [**uv**](https://docs.astral.sh/uv/) when available (an
+order-of-magnitude faster resolver/installer than pip, and the closest
+thing Python currently has to a "state of the art" package manager) and
+falls back to the standard library's `venv` + `pip` automatically when uv
+isn't installed. Nothing here is required for the repository's own audit
+tooling to work — that stays stdlib-only — uv only speeds up installing the
+three *test* dependencies in `requirements-dev.txt`.
+
+`dev-test` then runs, in the same order CI does, cheapest and most
+security-relevant first:
+
+```text
+1000x-Agent-Skills — local test report
+repo: /path/to/1000x-Agent-Skills
+
+▶ Skill safety audit... ✓ Skill safety audit (0.4s)
+▶ Content digest check... ✓ Content digest check (0.1s)
+▶ Skill Doctor validator... ✓ Skill Doctor validator (0.2s)
+▶ Pre-flight release audit... ✓ Pre-flight release audit (0.2s)
+▶ Pytest suite (coverage >= 60%)... ✓ Pytest suite (coverage >= 60%) (6.8s)
+
+────────────────────────────────────────────────────────────
+ Summary
+────────────────────────────────────────────────────────────
+ PASS  Skill safety audit                            0.4s
+ PASS  Content digest check                          0.1s
+ PASS  Skill Doctor validator                        0.2s
+ PASS  Pre-flight release audit                      0.2s
+ PASS  Pytest suite (coverage >= 60%)                6.8s
+────────────────────────────────────────────────────────────
+ 5/5 checks passed in 7.7s
+
+This matches what CI checks — safe to push.
+```
+
+If a step fails, the full output of *only* that step is printed underneath
+the summary — no need to re-run anything to see what broke.
+
+**Useful flags**, identical on both platforms:
+
+| Flag | Linux/macOS | Windows | Effect |
+|---|---|---|---|
+| Rebuild the environment from scratch | `dev-setup.sh --clean` | `dev-setup.ps1 -Clean` | Deletes and recreates `.venv/` |
+| Skip uv even if installed | `dev-setup.sh --no-uv` | `dev-setup.ps1 -NoUv` | Forces the `venv` + `pip` path |
+| Install uv first, then use it | `dev-setup.sh --with-uv` | `dev-setup.ps1 -WithUv` | A normal `pip install uv` — never a piped remote script |
+| Run only matching tests | `dev-test.sh -k EXPR` | `dev-test.ps1 -K EXPR` | Forwards to `pytest -k`, skips the audit steps |
+| Show output for passing steps too | `dev-test.sh -v` | `dev-test.ps1 -Verbose2` | Default only shows output for failures |
+| Fail instead of auto-installing | `dev-test.sh --no-setup` | `dev-test.ps1 -NoSetup` | `dev-test` normally runs `dev-setup` once for you if `.venv/` doesn't exist yet |
+
+**What these scripts do NOT do, by design**, matching the trust posture of
+everything else in this repository: they never touch anything outside the
+repo (the only thing created or modified is `.venv/`), they never require
+`sudo` or an elevated/Administrator prompt, and they never pipe a
+downloaded script into a shell — `--with-uv`/`-WithUv` is a plain
+`pip install`, the one place either script installs anything beyond the
+pinned contents of `requirements-dev.txt`. Both scripts are plain,
+readable shell/PowerShell with no obfuscation — read them before running
+them, the same advice that applies to any script from any repository.
+
+A dedicated test
+([`tests/unit/test_dev_scripts.py`](./tests/unit/test_dev_scripts.py)) keeps
+the two platforms honest with each other: it fails if the Linux and Windows
+variants ever run a different number of checks, a different set of checks,
+or checks in a different order — the same drift `multi-agent-docs` already
+guards against for `CLAUDE.md`/`AGENTS.md`.
 
 <br/>
 
@@ -452,7 +545,13 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Proje
 │   ├── validate_skills.py        # Skill Doctor: frontmatter, schema, digests, evals
 │   ├── audit_skill_safety.py     # Capability audit + hidden-instruction scan
 │   ├── skill_digest.py           # Computes and verifies attestation content digests
-│   └── install_to_agent.py       # Installer for Claude, Antigravity & Cursor (previews by default)
+│   ├── install_to_agent.py       # Installer for Claude, Antigravity & Cursor (previews by default)
+│   ├── linux/                    # One-command dev environment for Linux/macOS
+│   │   ├── dev-setup.sh          # Create or update .venv (uv, or venv+pip fallback)
+│   │   └── dev-test.sh           # Run the full CI-equivalent suite, print a report
+│   └── win/                      # One-command dev environment for Windows (PowerShell)
+│       ├── dev-setup.ps1         # Create or update .venv (uv, or venv+pip fallback)
+│       └── dev-test.ps1          # Run the full CI-equivalent suite, print a report
 ├── skills/                       # Production Skills Catalog
 │   ├── custom/                   # Cross-agent & workflow skills
 │   │   ├── multi-agent-docs/     # Synchronized multi-agent documentation skill
@@ -465,7 +564,7 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Proje
 │   │   └── README.md
 │   └── google/                   # Antigravity & Gemini-focused workflows
 │       └── README.md
-├── tests/                        # Pytest suite (268 tests) for all tooling & skill scripts
+├── tests/                        # Pytest suite (294 tests) for all tooling & skill scripts
 │   ├── unit/                     # Validators, safety auditor, digests, every skill script
 │   ├── smoke/                    # Harness sanity: env isolation & network blocking
 │   ├── fixtures/                 # Deterministic test data factories
