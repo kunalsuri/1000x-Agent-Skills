@@ -1,0 +1,14 @@
+# Normalize line endings so a cross-platform script can't be silently
+# corrupted by a checkout on the "wrong" OS -- e.g. a Windows checkout
+# injecting CRLF into a .sh file would break its `#!/usr/bin/env bash`
+# shebang and every `$'...'` ANSI-C quote in scripts/linux/*.sh.
+* text=auto
+
+# POSIX shell scripts: always LF, regardless of the checkout platform.
+*.sh text eol=lf
+
+# PowerShell scripts: CRLF, native to Windows tooling (Notepad, ISE, the
+# PowerShell ISE editor). PowerShell 7+ (pwsh) itself accepts LF or CRLF
+# equally on every platform, so this is for author-side tooling, not a
+# functional requirement.
+*.ps1 text eol=crlf
