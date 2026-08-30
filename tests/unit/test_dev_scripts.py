@@ -68,9 +68,9 @@ class TestBashSyntax:
     def test_no_variable_is_left_unquoted_in_an_rm_command(self, repo_root, name):
         """The one shell mistake that turns a bug into data loss."""
         text = read(repo_root, str(LINUX_DIR / name))
-        for match in re.finditer(r"rm\s+-rf?\s+(\S+)", text):
+        for match in re.finditer(r"rm\s+-r[^\s]*\s+(?:--\s+)?(\S+)", text):
             arg = match.group(1)
-            assert arg.startswith('"') or arg.startswith("--"), (
+            assert arg.startswith('"'), (
                 f"unquoted rm target in {name}: {match.group(0)!r}"
             )
 
@@ -135,7 +135,7 @@ class TestCrossPlatformParity:
     """
 
     @staticmethod
-    def bash_steps(repo_root: Path) -> list[str]:
+    def bash_steps(repo_root: Path) -> list[tuple[str, str]]:
         text = read(repo_root, str(LINUX_DIR / "dev-test.sh"))
         # Matches: run_step "Name" "$VENV_PY" target.py [args...]
         pattern = re.compile(
@@ -145,7 +145,7 @@ class TestCrossPlatformParity:
                 if "$PYTEST_K" not in args]
 
     @staticmethod
-    def powershell_steps(repo_root: Path) -> list[str]:
+    def powershell_steps(repo_root: Path) -> list[tuple[str, str]]:
         text = read(repo_root, str(WIN_DIR / "dev-test.ps1"))
         pattern = re.compile(
             r'Invoke-Step\s+-Name\s+"([^"]+)"\s+-Exe\s+\$VenvPy\s+`?\s*\n?\s*'

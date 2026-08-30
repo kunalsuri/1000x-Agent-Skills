@@ -157,6 +157,9 @@ fi
 # ---------------------------------------------------------------------------
 
 if [[ "$CLEAN" == "1" && -d "$VENV_DIR" ]]; then
+  if [[ -L "$VENV_DIR" ]]; then
+    die "--clean: ${VENV_DIR} is a symlink — refusing to remove it to avoid deleting outside the repository"
+  fi
   info "Removing existing environment (--clean): ${VENV_DIR}"
   rm -rf -- "$VENV_DIR"
 fi

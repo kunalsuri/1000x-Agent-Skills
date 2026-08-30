@@ -190,37 +190,13 @@ CI run instead of hoping for one.
 <tr><th></th><th>Linux / macOS</th><th>Windows (PowerShell)</th></tr>
 <tr>
 <td><b>Set up once</b></td>
-<td>
-
-```bash
-./scripts/linux/dev-setup.sh
-```
-
-</td>
-<td>
-
-```powershell
-.\scripts\win\dev-setup.ps1
-```
-
-</td>
+<td><pre><code>./scripts/linux/dev-setup.sh</code></pre></td>
+<td><pre><code>.\scripts\win\dev-setup.ps1</code></pre></td>
 </tr>
 <tr>
 <td><b>Run every check</b></td>
-<td>
-
-```bash
-./scripts/linux/dev-test.sh
-```
-
-</td>
-<td>
-
-```powershell
-.\scripts\win\dev-test.ps1
-```
-
-</td>
+<td><pre><code>./scripts/linux/dev-test.sh</code></pre></td>
+<td><pre><code>.\scripts\win\dev-test.ps1</code></pre></td>
 </tr>
 </table>
 

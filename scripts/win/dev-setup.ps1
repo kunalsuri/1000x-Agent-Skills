@@ -194,6 +194,10 @@ if (-not $UseUv) {
 # ---------------------------------------------------------------------------
 
 if ($Clean -and (Test-Path $VenvDir)) {
+    $item = Get-Item $VenvDir -Force
+    if ($item.LinkType -ne $null) {
+        Fail "-Clean: $VenvDir is a symlink or junction — refusing to remove it to avoid deleting outside the repository"
+    }
     Write-Info "Removing existing environment (-Clean): $VenvDir"
     Remove-Item -Recurse -Force $VenvDir
 }
