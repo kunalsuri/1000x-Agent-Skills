@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "title": "Agent Skill Attestation",
+  "description": "Schema for a skill's attestation.json. Every attestation.json in this repository references this file in its $schema field; until this schema existed, those references resolved to nothing and no attestation was ever validated against anything.",
+  "type": "object",
+  "required": [
+    "skill_name",
+    "version",
+    "attestation_status",
+    "capabilities",
+    "attested_by",
+    "attestation_date",
+    "provenance",
+    "content_digest"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
+    "skill_name": {
+      "description": "Must equal the skill's directory name and the 'name' in its SKILL.md frontmatter.",
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "attestation_status": {
+      "description": "DRAFT: authored, passes the linter, not yet evaluated. TESTED: evaluated on at least one model with a passing trigger suite. VERIFIED: multi-platform verified with linked evidence. DEPRECATED: superseded.",
+      "enum": [
+        "DRAFT",
+        "TESTED",
+        "VERIFIED",
+        "DEPRECATED"
+      ]
+    },
+    "capabilities": {
+      "description": "What this skill's code is permitted to do. scripts/audit_skill_safety.py derives the same values structurally from the source and fails the build when the code exceeds this declaration.",
+      "type": "object",
+      "required": [
+        "network",
+        "process_execution",
+        "dynamic_code_execution",
+        "filesystem"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "network": {
+          "description": "'none' means no module granting network access is imported anywhere in the skill.",
+          "enum": [
+            "none",
+            "outbound"
+          ]
+        },
+        "process_execution": {
+          "description": "'none' means the skill cannot spawn a process.",
+          "enum": [
+            "none",
+            "subprocess"
+          ]
+        },
+        "dynamic_code_execution": {
+          "description": "'none' means no eval/exec/compile/__import__ and no pickle, marshal or importlib.",
+          "enum": [
+            "none",
+            "eval"
+          ]
+        },
+        "filesystem": {
+          "description": "Least to most powerful. 'unrestricted' must be declared by anything that writes outside the target workspace.",
+          "enum": [
+            "read-only",
+            "workspace-write",
+            "workspace-delete",
+            "unrestricted"
+          ]
+        }
+      }
+    },
+    "capabilities_rationale": {
+      "description": "Why each non-minimal capability is needed. Required whenever any capability is above its most restrictive value.",
+      "type": "string",
+      "minLength": 1
+    },
+    "attested_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "attestation_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "content_digest": {
+      "description": "sha256 over a canonical manifest of every file in the skill except attestation.json itself. Binds this attestation to exact content: edit any file and the digest no longer matches. Produced and verified by scripts/skill_digest.py.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "tested_platforms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "platform",
+          "model",
+          "status"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "properties": {
+          "platform": {
+            "type": "string",
+            "minLength": 1
+          },
+          "model": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "enum": [
+              "PASS",
+              "FAIL",
+              "PARTIAL",
+              "NOT_RUN"
+            ]
+          },
+          "notes": {
+            "type": "string"
+          },
+          "evidence_url": {
+            "description": "Link to a transcript, CI run, or log backing this row. A PASS with no evidence_url is a claim, not a proof.",
+            "type": "string",
+            "format": "uri"
+          },
+          "currency_caveat": {
+            "description": "Why this row may no longer hold: what has changed in the skill since this platform was last exercised. A PASS with no version tag and no re-run should carry one.",
+            "type": "string"
+          },
+          "version_tag": {
+            "description": "The skill version this row was actually run against.",
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+$"
+          }
+        }
+      }
+    },
+    "performance_summary": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "success_rate_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "average_token_consumption": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "recovery_resilience": {
+          "enum": [
+            "Low",
+            "Medium",
+            "High"
+          ]
+        },
+        "measurement_basis": {
+          "description": "How these numbers were obtained: sample size, harness, and date. Without it they are unfalsifiable.",
+          "type": "string"
+        },
+        "methodology_caveat": {
+          "description": "Required when any figure here is illustrative rather than the output of a documented, repeatable measurement. Say so plainly instead of letting a bare number imply rigour it does not have.",
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source_type",
+        "license"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_type": {
+          "enum": [
+            "original",
+            "derived",
+            "vendored"
+          ]
+        },
+        "origin_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "upstream_commit": {
+          "type": "string"
+        }
+      }
+    },
+    "security_audit": {
+      "description": "Point-in-time result of running this skill's own capability auditor. Complements the enforced 'capabilities' block above: capabilities are checked on every CI run, this records a specific reviewed run a reader can reproduce.",
+      "type": "object",
+      "required": [
+        "tool",
+        "method",
+        "last_run_date",
+        "last_run_result",
+        "reproduce"
+      ],
+      "additionalProperties": {
+        "type": "string"
+      },
+      "properties": {
+        "tool": {
+          "type": "string",
+          "minLength": 1
+        },
+        "method": {
+          "type": "string",
+          "minLength": 1
+        },
+        "last_run_date": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "last_run_result": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ]
+        },
+        "reproduce": {
+          "description": "The exact command a reader can run to reproduce this result themselves.",
+          "type": "string",
+          "minLength": 1
+        },
+        "imports_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "disallowed_imports_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dangerous_calls_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "obfuscation_smells_found": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "external_urls_found": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "$comment": "A VERIFIED skill must name the platforms it was verified on.",
+      "if": {
+        "properties": {
+          "attestation_status": {
+            "const": "VERIFIED"
+          }
+        },
+        "required": [
+          "attestation_status"
+        ]
+      },
+      "then": {
+        "required": [
+          "tested_platforms"
+        ],
+        "properties": {
+          "tested_platforms": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ]
+}

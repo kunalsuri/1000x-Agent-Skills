@@ -1,56 +1,68 @@
-"""
-Unit tests for module: run_preflight
-Auto-scaffolded by preflight-test-engineer.
-"""
+"""Tests for the preflight-test-engineer pipeline runner."""
+
+import sys
 
 import pytest
 
-def test_check_python_syntax_success() -> None:
-    """Verifies check_python_syntax execution with valid inputs."""
-    # TODO: Call check_python_syntax and assert expected output
-    assert True
+pytestmark = pytest.mark.unit
 
-def test_check_python_syntax_boundary_and_negative_inputs() -> None:
-    """Verifies check_python_syntax handles empty, None, and edge inputs."""
-    # TODO: Call check_python_syntax with boundary arguments
-    assert True
 
-def test_run_command_capture_success() -> None:
-    """Verifies run_command_capture execution with valid inputs."""
-    # TODO: Call run_command_capture and assert expected output
-    assert True
+@pytest.fixture
+def preflight(load_script):
+    return load_script("skills/custom/preflight-test-engineer/scripts/run_preflight.py")
 
-def test_run_command_capture_boundary_and_negative_inputs() -> None:
-    """Verifies run_command_capture handles empty, None, and edge inputs."""
-    # TODO: Call run_command_capture with boundary arguments
-    assert True
 
-def test_run_preflight_pipeline_success() -> None:
-    """Verifies run_preflight_pipeline execution with valid inputs."""
-    # TODO: Call run_preflight_pipeline and assert expected output
-    assert True
+class TestSyntaxStage:
+    def test_clean_sources_pass(self, preflight, tmp_path):
+        (tmp_path / "ok.py").write_text("def f():\n    return 1\n", encoding="utf-8")
+        ok, errors = preflight.check_python_syntax(tmp_path)
+        assert ok is True and errors == []
 
-def test_run_preflight_pipeline_boundary_and_negative_inputs() -> None:
-    """Verifies run_preflight_pipeline handles empty, None, and edge inputs."""
-    # TODO: Call run_preflight_pipeline with boundary arguments
-    assert True
+    def test_a_syntax_error_is_reported_with_its_file(self, preflight, tmp_path):
+        (tmp_path / "broken.py").write_text("def f(:\n", encoding="utf-8")
+        ok, errors = preflight.check_python_syntax(tmp_path)
+        assert ok is False and "broken.py" in errors[0]
 
-def test_print_summary_table_success() -> None:
-    """Verifies print_summary_table execution with valid inputs."""
-    # TODO: Call print_summary_table and assert expected output
-    assert True
+    def test_one_bad_file_among_good_ones_still_fails(self, preflight, tmp_path):
+        (tmp_path / "ok.py").write_text("x = 1\n", encoding="utf-8")
+        (tmp_path / "bad.py").write_text("x = (\n", encoding="utf-8")
+        ok, errors = preflight.check_python_syntax(tmp_path)
+        assert ok is False and len(errors) == 1
 
-def test_print_summary_table_boundary_and_negative_inputs() -> None:
-    """Verifies print_summary_table handles empty, None, and edge inputs."""
-    # TODO: Call print_summary_table with boundary arguments
-    assert True
+    def test_virtualenvs_and_caches_are_skipped(self, preflight, tmp_path):
+        vendored = tmp_path / ".venv" / "lib"
+        vendored.mkdir(parents=True)
+        (vendored / "bad.py").write_text("def f(:\n", encoding="utf-8")
+        ok, _ = preflight.check_python_syntax(tmp_path)
+        assert ok is True
 
-def test_main_success() -> None:
-    """Verifies main execution with valid inputs."""
-    # TODO: Call main and assert expected output
-    assert True
+    def test_a_directory_with_no_python_passes(self, preflight, tmp_path):
+        (tmp_path / "README.md").write_text("# hi\n", encoding="utf-8")
+        assert preflight.check_python_syntax(tmp_path) == (True, [])
 
-def test_main_boundary_and_negative_inputs() -> None:
-    """Verifies main handles empty, None, and edge inputs."""
-    # TODO: Call main with boundary arguments
-    assert True
+
+class TestCommandCapture:
+    def test_stdout_and_exit_code_are_captured(self, preflight, tmp_path):
+        code, out, _ = preflight.run_command_capture(
+            [sys.executable, "-c", "print('hello')"], tmp_path)
+        assert code == 0 and "hello" in out
+
+    def test_a_failing_command_reports_its_exit_code(self, preflight, tmp_path):
+        code, _, _ = preflight.run_command_capture(
+            [sys.executable, "-c", "raise SystemExit(3)"], tmp_path)
+        assert code == 3
+
+    def test_stderr_is_captured_separately(self, preflight, tmp_path):
+        _, _, err = preflight.run_command_capture(
+            [sys.executable, "-c", "import sys; sys.stderr.write('boom')"], tmp_path)
+        assert "boom" in err
+
+    def test_a_missing_executable_returns_127_rather_than_raising(self, preflight, tmp_path):
+        code, _, err = preflight.run_command_capture(["definitely-not-a-real-binary"], tmp_path)
+        assert code == 127 and "not found" in err
+
+    def test_a_hanging_command_is_killed_by_the_timeout(self, preflight, tmp_path):
+        """Without this, a wedged test runner hangs the whole pipeline."""
+        code, _, err = preflight.run_command_capture(
+            [sys.executable, "-c", "import time; time.sleep(30)"], tmp_path, timeout_sec=1)
+        assert code == 124 and "timed out" in err

@@ -1,0 +1,35 @@
+{
+  "$comment": "Capability declarations for repository tooling that a user is expected to execute directly. Skills carry their own declaration inside attestation.json so they stay auditable after being copied out of this repository; these files are not skills, so they declare here. scripts/audit_skill_safety.py checks each declaration against what the code can actually do.",
+  "components": [
+    {
+      "path": "scripts/validate_skills.py",
+      "capabilities": {
+        "network": "none",
+        "process_execution": "none",
+        "dynamic_code_execution": "none",
+        "filesystem": "read-only"
+      },
+      "rationale": "Reads SKILL.md, attestation.json and evals/test-cases.json and prints a report. Writes nothing."
+    },
+    {
+      "path": "scripts/audit_skill_safety.py",
+      "capabilities": {
+        "network": "none",
+        "process_execution": "none",
+        "dynamic_code_execution": "none",
+        "filesystem": "read-only"
+      },
+      "rationale": "Parses skill sources with ast and scans Markdown with re. Writes nothing, fetches nothing, and executes nothing it reads -- an auditor that ran the code it audits would be pointless."
+    },
+    {
+      "path": "scripts/install_to_agent.py",
+      "capabilities": {
+        "network": "none",
+        "process_execution": "none",
+        "dynamic_code_execution": "none",
+        "filesystem": "unrestricted"
+      },
+      "rationale": "Declared 'unrestricted' deliberately: this is the only tool here that writes OUTSIDE the repository, into agent skill directories under the user's home (~/.claude/skills, ~/.gemini/config/skills). It replaces a destination directory when a skill of the same name already exists. Run it with --dry-run first; it refuses to install any skill that fails the safety audit."
+    }
+  ]
+}

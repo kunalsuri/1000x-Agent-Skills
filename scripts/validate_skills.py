@@ -12,6 +12,36 @@ import json
 import argparse
 from pathlib import Path
 
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCHEMA_PATH = REPO_ROOT / "docs" / "schemas" / "attestation.schema.json"
+
+# Digest verification lives alongside this file. Importing it by path keeps
+# `python scripts/validate_skills.py` working from any working directory.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from skill_digest import verify_skill as verify_skill_digest  # noqa: E402
+
+# jsonschema is optional on purpose. The structural checks below are
+# stdlib-only so anyone can validate a skill without installing anything;
+# when jsonschema IS available (as it is in CI) the full schema runs too.
+try:
+    import jsonschema  # type: ignore
+    _HAS_JSONSCHEMA = True
+except ImportError:  # pragma: no cover - exercised by the no-dependency path
+    _HAS_JSONSCHEMA = False
+
+CAPABILITY_KEYS = ("network", "process_execution", "dynamic_code_execution", "filesystem")
+
+
+def load_attestation_schema():
+    """Return the parsed attestation schema, or None when it is unavailable."""
+    if not SCHEMA_PATH.exists():
+        return None
+    try:
+        return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return None
+
+
 def estimate_tokens(text: str) -> int:
     """Heuristic token estimation (~4 chars/token or word split)."""
     return max(1, len(re.findall(r'\w+|[^\w\s]', text)))
@@ -96,20 +126,69 @@ def validate_skill(skill_dir: Path) -> dict:
         warnings.append(f"SKILL.md is {body_lines} lines (> 500 lines limit). Move references to references/.")
         score -= 15
 
-    # 3. Attestation check
+    # 3. Attestation: schema conformance, declared capabilities, content binding.
+    #    Checking that the string "VERIFIED" is merely present proves nothing --
+    #    anyone can type it. These three checks are what make the badge mean
+    #    something: it conforms to a published schema, it declares what the code
+    #    may do, and it is bound to the exact bytes it was granted for.
     if not attestation_json.exists():
-        warnings.append("Missing attestation.json (skill is un-attested).")
-        score -= 15
+        errors.append("Missing attestation.json (skill is un-attested and cannot be verified).")
+        score -= 25
     else:
         try:
             att_data = json.loads(attestation_json.read_text(encoding="utf-8"))
-            if not att_data.get("attestation_status"):
-                warnings.append("attestation.json missing 'attestation_status'.")
-                score -= 5
-            metrics["attestation_status"] = att_data.get("attestation_status", "UNKNOWN")
-        except Exception as e:
+        except json.JSONDecodeError as e:
             errors.append(f"Malformed attestation.json: {e}")
-            score -= 15
+            score -= 25
+            att_data = None
+
+        if att_data is not None:
+            metrics["attestation_status"] = att_data.get("attestation_status", "UNKNOWN")
+
+            schema = load_attestation_schema()
+            if schema is None:
+                warnings.append(
+                    "docs/schemas/attestation.schema.json is missing; attestation "
+                    "content could not be validated against a schema."
+                )
+                score -= 5
+            elif _HAS_JSONSCHEMA:
+                validator = jsonschema.Draft202012Validator(schema)
+                for err in sorted(validator.iter_errors(att_data), key=lambda e: list(e.path)):
+                    location = "/".join(str(part) for part in err.path) or "(root)"
+                    errors.append(f"attestation.json fails schema at '{location}': {err.message}")
+                    score -= 10
+            else:
+                # Stdlib fallback: enforce the schema's required top-level keys
+                # so a missing declaration still fails without jsonschema present.
+                for key in schema.get("required", []):
+                    if key not in att_data:
+                        errors.append(f"attestation.json missing required field '{key}'.")
+                        score -= 10
+
+            capabilities = att_data.get("capabilities")
+            if not isinstance(capabilities, dict):
+                errors.append(
+                    "attestation.json has no 'capabilities' object. Without it "
+                    "scripts/audit_skill_safety.py has nothing to enforce the code against."
+                )
+                score -= 15
+            else:
+                missing_caps = [k for k in CAPABILITY_KEYS if k not in capabilities]
+                if missing_caps:
+                    errors.append(f"attestation.json capabilities missing: {missing_caps}.")
+                    score -= 10
+                else:
+                    metrics["capabilities"] = ",".join(
+                        f"{k}={capabilities[k]}" for k in CAPABILITY_KEYS
+                    )
+
+        digest_ok, digest_detail = verify_skill_digest(skill_dir)
+        if digest_ok:
+            metrics["content_digest"] = digest_detail[:19] + "..."
+        else:
+            errors.append(f"Content digest check failed: {digest_detail}")
+            score -= 25
 
     # 4. Evaluation test-cases check
     if not evals_json.exists():

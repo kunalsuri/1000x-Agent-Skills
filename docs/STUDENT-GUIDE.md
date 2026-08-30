@@ -28,9 +28,9 @@ python scripts/install_to_agent.py --target cursor --skill systematic-debugging
 ## 🛠️ How to Create a New Skill
 
 1. **Ideate**: Identify a repetitive process (e.g. debugging, API client generation, database migration).
-2. **Draft with LLM**: Use the prompt in [`utils/skill-creator/SKILL-CREATOR-PROMPT.md`](file:///c:/Users/kunal/Documents/GitHub/1000x-Agent-Skills/utils/skill-creator/SKILL-CREATOR-PROMPT.md).
+2. **Draft with LLM**: Use the prompt in [`utils/skill-creator/SKILL-CREATOR-PROMPT.md`](../utils/skill-creator/SKILL-CREATOR-PROMPT.md).
 3. **Validate in Skill Doctor**:
-   - Open [`utils/Skill-Doctor.html`](file:///c:/Users/kunal/Documents/GitHub/1000x-Agent-Skills/utils/Skill-Doctor.html) in your browser.
+   - Open [`utils/Skill-Doctor.html`](../utils/Skill-Doctor.html) in your browser.
    - Paste your `SKILL.md` and ensure your health score is **$\ge 85$ (Grade A)**.
 4. **Create Test Cases**:
    - Add positive and negative trigger queries into `evals/test-cases.json`.

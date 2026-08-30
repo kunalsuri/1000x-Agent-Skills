@@ -102,11 +102,78 @@ flowchart TD
 | Dimension | ❌ Traditional Monolithic Prompts | 🌟 1000x-Agent-Skills Architecture |
 |---|---|---|
 | **Context Overhead** | Heavy (5,000 – 20,000+ tokens loaded continuously) | **Ultra-lightweight (~100 tokens at boot, full body on-demand)** |
-| **Verification & Proof** | None (Untested static markdown text) | **Empirical Attestation (`attestation.json`) across Claude, Gemini & GPT** |
-| **Trigger Evaluation** | Blind activation / high false triggers | **Benchmark test suite (`evals/test-cases.json`) with $\ge 90\%$ Recall** |
+| **Verification & Proof** | None (Untested static markdown text) | **Machine-enforced attestation**: declared capabilities checked against the code by AST analysis, and a SHA-256 `content_digest` binding each attestation to exact bytes — both re-verified on every commit |
+| **Trigger Evaluation** | Blind activation / high false triggers | **Positive and negative prompt datasets** (`evals/test-cases.json`), present and schema-checked for every skill. Automated scoring against a live model is not yet wired up — see [Enforced vs. recorded](#-enforced-vs-recorded) |
 | **Multi-Agent Parity** | Fragmented per IDE / out-of-sync instructions | **Synchronized across Claude Code, Antigravity, Cursor & Codex** |
 | **Deterministic Tooling** | Unassisted LLM hallucinations | **Integrated Python CLI engines + semantic LLM verification** |
-| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html` + Automated CI Linting** |
+| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a 268-test pytest suite, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
+
+<br/>
+
+---
+
+<br/>
+
+## 🔍 Enforced vs. Recorded
+
+Claims in this repository fall into two categories, and it matters which is which:
+
+| | **Enforced** | **Recorded** |
+|---|---|---|
+| Checked by | CI, on every push and pull request | A person, once, on a given day |
+| Covers | Declared capabilities, content digests, attestation schema, agent-doc parity, the test suite | `tested_platforms` rows, `performance_summary` figures |
+| If it is wrong | The build fails | Nothing happens automatically |
+| How to trust it | Re-run the command yourself — it is deterministic | Read the caveat, check the date, re-run it |
+
+Recorded claims carry their own `currency_caveat` and `methodology_caveat`
+fields stating plainly what they do and do not cover. A `PASS` with no
+`evidence_url` is a claim, not a proof, and is labelled as such.
+
+<br/>
+
+### ✅ Verify it yourself
+
+You do not have to take any of this on trust, and you do not have to install
+anything first — the audit tooling is stdlib-only by design:
+
+```bash
+# Does any skill do something it did not declare? Is anything hidden in the Markdown?
+python scripts/audit_skill_safety.py --strict
+
+# Does every skill's content still match the attestation it was granted?
+python scripts/skill_digest.py --check
+
+# Does every skill conform to the published attestation schema?
+python scripts/validate_skills.py
+```
+
+Run them against a copy you downloaded, not just against this repository.
+CI runs the same three commands on a bare interpreter with no third-party
+packages installed, so the "no dependencies needed to audit" claim is itself
+tested rather than asserted.
+
+<br/>
+
+**What the safety audit actually checks.** A skill has two attack surfaces:
+
+- **Its scripts**, which run on your machine. Analysed structurally with
+  Python's `ast` module — a `subprocess.run(...)` call cannot hide from an AST
+  walk the way it can from a skim-read of a 2,000-line file. Every skill
+  declares `network`, `process_execution`, `dynamic_code_execution` and
+  `filesystem` levels in its `attestation.json`, and the build fails if the
+  code exceeds its declaration.
+- **Its Markdown**, which is injected into an agent's context and *becomes
+  instructions*. This surface is the sneakier of the two and is rarely
+  scanned: invisible Unicode (including the Tags block used to smuggle whole
+  instructions), bidirectional overrides, directive-bearing HTML comments,
+  encoded payloads, pipe-to-shell one-liners, and credential-exfiltration
+  patterns.
+
+Reviewed false positives live in [`docs/safety-allowlist.json`](./docs/safety-allowlist.json),
+each pinned to a content fingerprint and a written justification. Edit the
+line an exemption covers and the fingerprint changes, the exemption stops
+applying, and the finding resurfaces for a fresh review. Suppressed findings
+are still printed — suppressed, never hidden.
 
 <br/>
 
@@ -133,8 +200,8 @@ Every skill in this repository is governed by three non-negotiable engineering g
 | Pillar | File / Artifact | Guarantee & Technical Specification |
 |---|---|---|
 | **1. 📋 Declared** | [`SKILL.md`](./skills/custom/multi-agent-docs/SKILL.md) | **Strict YAML frontmatter interface** (`name`, `version`, `description`, `allowed-tools`, `compatibility`, `tags`). Concise body limit ($\le 500$ lines) containing actionable procedural instructions. |
-| **2. 🛡️ Attested** | [`attestation.json`](./docs/ATTESTATION-SPEC.md) | **Empirical proof of execution** on production LLM backends (**Claude 3.7 Sonnet**, **Gemini 3.7 Flash**, **GPT-4o**), documenting success rates, token usage, tool call sequences, and recovery resilience. |
-| **3. 🧪 Evaluated** | [`evals/test-cases.json`](./docs/EVALUATION-FRAMEWORK.md) | **Positive and negative benchmark suites** measuring intent classification precision ($\ge 85\%$) and recall ($\ge 90\%$) to prevent false triggers and token wastage. |
+| **2. 🛡️ Attested** | [`attestation.json`](./docs/ATTESTATION-SPEC.md) | Two things, kept distinct. **Enforced:** a `capabilities` declaration checked against the code by AST analysis, plus a `content_digest` that breaks if any file changes after attestation. **Recorded:** run reports on **Claude 3.7 Sonnet**, **Gemini 3.7 Flash** and **GPT-4o**, each carrying its own currency caveat. |
+| **3. 🧪 Evaluated** | [`evals/test-cases.json`](./docs/EVALUATION-FRAMEWORK.md) | **Positive and negative trigger datasets** for every skill, validated for structure and minimum size on every CI run. Precision $\ge 85\%$ and recall $\ge 90\%$ are the **design targets** these datasets exist to measure; scoring them against a live model is not yet automated, so no measured figure is claimed. |
 
 <br/>
 
@@ -288,17 +355,23 @@ python scripts/validate_skills.py
 <br/>
 
 ```text
-=================================================================
- [SKILL DOCTOR] 1000x-Agent-Skills Validation Suite
-=================================================================
-[PASS] [custom/multi-agent-docs] -> PASS
-[PASS] [custom/public-repo-release-review] -> PASS
-
- [README AUDIT] ✅ README.md skills catalog matches physical filesystem 1:1.
-
-=================================================================
- Summary: 2 skills scanned | 2 Passed | 0 Warnings | 0 Failed
-=================================================================
+========================================================================
+ 🩺 [SKILL DOCTOR] Specification & Health Diagnostic Suite
+========================================================================
+[PASS] [custom/multi-agent-docs] -> Health Score: 100/100 [Grade A+]
+    ℹ️  frontmatter_tokens: 140 | body_lines: 59 | attestation_status: VERIFIED
+        | capabilities: network=none,process_execution=none,
+          dynamic_code_execution=none,filesystem=workspace-write
+        | content_digest: sha256:440e88cf64b3... | eval_prompts_count: 3 pos / 2 neg
+[PASS] [custom/preflight-test-engineer]   -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/public-repo-release-review] -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/readme-designer]           -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/saas-app-builder]          -> Health Score: 100/100 [Grade A+]
+------------------------------------------------------------------------
+ [README AUDIT] ✅ README.md catalog matches physical filesystem 1:1.
+========================================================================
+ Summary: 5 skills scanned | 5 Passed | 0 Warnings | 0 Failed
+========================================================================
 ```
 
 <br/>
@@ -323,6 +396,20 @@ python skills/custom/public-repo-release-review/scripts/scaffold_governance.py -
 # 🎨 Audit Markdown / README visual hierarchy, spacing, badges & link integrity
 python skills/custom/readme-designer/scripts/audit_readme.py --target README.md --strict
 
+# 🛡️ Audit every skill for undeclared capabilities and hidden instructions
+python scripts/audit_skill_safety.py --strict --show-info
+
+# 🔗 Verify (or re-bind) the content digest that anchors each attestation
+python scripts/skill_digest.py --check
+python scripts/skill_digest.py --update
+
+# 🧪 Run the full test suite with a coverage floor
+python -m pytest --cov=scripts --cov=skills --cov=utils --cov-fail-under=60
+
+# 📦 Preview an install (writes nothing), then apply it
+python scripts/install_to_agent.py --target claude --all
+python scripts/install_to_agent.py --target claude --all --apply
+
 # ✨ Scaffold an ultra-modern README boilerplate from scratch
 python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Project" --tagline "Awesome AI Project"
 ```
@@ -339,40 +426,53 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Proje
 
 ```text
 1000x-Agent-Skills/
-├── .agents/                      # Antigravity agent configuration & workspace rules
-│   ├── rules/                    # Local rule definitions
-│   ├── skills/                   # Local workspace skills
-│   │   ├── multi-agent-docs/     # Workspace copy of multi-agent-docs
-│   │   ├── public-repo-release-review/ # Workspace copy of public-repo-release-review
-│   │   └── readme-designer/      # Workspace copy of readme-designer
-│   └── AGENTS.md                 # Agent operating directives
-├── .claude/                      # Claude Code agent configuration
-├── .github/                      # GitHub issue forms, PR template & CI workflows
+├── .agents/                      # Antigravity / Cursor / Codex agent configuration
+│   ├── skills/                   # Byte-identical mirror of skills/custom (CI-enforced parity)
+│   └── AGENTS.md                 # Agent operating directives (mirrors root AGENTS.md)
+├── .claude/                      # Claude Code project configuration
+│   └── README.md                 # What belongs here, and what deliberately does not
+├── .github/                      # GitHub issue forms, PR template, CODEOWNERS & CI
 │   ├── ISSUE_TEMPLATE/           # bug_report.yml, feature_request.yml
-│   ├── workflows/                # ci.yml (Skill validation & pre-flight audit)
+│   ├── workflows/                # ci.yml (safety audit, digests, validation, tests)
+│   ├── CODEOWNERS                # Review ownership, incl. every trust-critical path
+│   ├── dependabot.yml            # Weekly GitHub Actions & pip update PRs
 │   └── PULL_REQUEST_TEMPLATE.md  # Standard pull request checklist
 ├── docs/                         # Specification & Engineering Documentation Hub
+│   ├── schemas/
+│   │   └── attestation.schema.json  # JSON Schema every attestation.json is validated against
+│   ├── safety-allowlist.json     # Reviewed safety exemptions, each pinned to a content hash
+│   ├── capability-declarations.json # Declared capabilities for repo tooling users execute
 │   ├── SPECIFICATIONS.md         # Open Agent Skills format and schema guidelines
-│   ├── ATTESTATION-SPEC.md       # Attestation JSON specification & verification levels
+│   ├── ATTESTATION-SPEC.md       # Attestation schema, enforced vs recorded claims
 │   ├── EVALUATION-FRAMEWORK.md   # Precision / recall benchmark dataset design
 │   ├── ECOSYSTEM-TRACKER.md      # Living directory of agent specs, papers & tooling
 │   ├── STUDENT-GUIDE.md          # Step-by-step student authoring & assignment guide
 │   └── AGENTS.md                 # Multi-agent operating rules & directives
-├── scripts/                      # CLI Maintenance & Deployment Tools
-│   ├── validate_skills.py        # Automated CI/CD skill validation engine
-│   └── install_to_agent.py       # Cross-platform installer for Claude, Antigravity & Cursor
+├── scripts/                      # CLI Maintenance, Audit & Deployment Tools (stdlib-only)
+│   ├── validate_skills.py        # Skill Doctor: frontmatter, schema, digests, evals
+│   ├── audit_skill_safety.py     # Capability audit + hidden-instruction scan
+│   ├── skill_digest.py           # Computes and verifies attestation content digests
+│   └── install_to_agent.py       # Installer for Claude, Antigravity & Cursor (previews by default)
 ├── skills/                       # Production Skills Catalog
 │   ├── custom/                   # Cross-agent & workflow skills
-│   │   ├── multi-agent-docs/     # Flagship synchronized multi-agent documentation skill
-│   │   ├── public-repo-release-review/ # Flagship pre-flight public release review & audit
-│   │   ├── readme-designer/      # Flagship README & documentation visual design skill
+│   │   ├── multi-agent-docs/     # Synchronized multi-agent documentation skill
+│   │   ├── preflight-test-engineer/ # Codebase analysis & test-suite scaffolding
+│   │   ├── public-repo-release-review/ # Pre-flight public release review & audit
+│   │   ├── readme-designer/      # README & documentation visual design skill
+│   │   ├── saas-app-builder/     # Full-stack SaaS application scaffolder
 │   │   └── README.md             # Custom skills index & requirements
 │   ├── anthropic/                # Claude-focused engineering workflows
 │   │   └── README.md
 │   └── google/                   # Antigravity & Gemini-focused workflows
 │       └── README.md
+├── tests/                        # Pytest suite (268 tests) for all tooling & skill scripts
+│   ├── unit/                     # Validators, safety auditor, digests, every skill script
+│   ├── smoke/                    # Harness sanity: env isolation & network blocking
+│   ├── fixtures/                 # Deterministic test data factories
+│   └── conftest.py               # Hermetic harness: real outbound-network guard
 ├── utils/                        # Developer Lab & Diagnostics
 │   ├── Skill-Doctor.html         # Interactive offline web-app linter & health dashboard
+│   ├── skill_doctor.py           # CLI wrapper around scripts/validate_skills.py
 │   └── skill-creator/            # Co-design prompt, starters & schema templates
 ├── AGENTS.md                     # Root multi-agent directives (Antigravity/Cursor/Codex)
 ├── CLAUDE.md                     # Root Claude Code configuration & guidelines
@@ -381,6 +481,8 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Proje
 ├── CODE_OF_CONDUCT.md            # Contributor Covenant v2.1 Code of Conduct
 ├── COLLABORATORS.md              # Solo-maintainer & contribution policy
 ├── LICENSE                       # Apache 2.0 Open Source License
+├── pytest.ini                    # Test discovery, markers & strict config
+├── requirements-dev.txt          # Pinned CI/test dependencies (never needed to audit a skill)
 ├── README.md                     # Repository overview & quickstart
 ├── SECURITY.md                   # Security vulnerability disclosure & triage policy
 └── SUPPORT.md                    # Support channels & discussion guidelines

@@ -1,0 +1,11 @@
+# Development & CI dependencies for 1000x-Agent-Skills.
+#
+# Runtime note: the repository's own tooling (scripts/validate_skills.py,
+# scripts/audit_skill_safety.py, and every skill script) is deliberately
+# stdlib-only. Nothing below is required to RUN or AUDIT a skill -- these
+# pins exist purely to execute the test suite in CI. Auditing this
+# repository must never require installing third-party code first.
+
+pytest==9.1.1
+pytest-cov==7.1.0
+jsonschema==4.26.0

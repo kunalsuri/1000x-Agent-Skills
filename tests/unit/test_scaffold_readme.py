@@ -1,26 +1,52 @@
-"""
-Unit tests for module: scaffold_readme
-Auto-scaffolded by preflight-test-engineer.
-"""
+"""Tests for the readme-designer generator."""
 
 import pytest
 
-def test_generate_readme_content_success() -> None:
-    """Verifies generate_readme_content execution with valid inputs."""
-    # TODO: Call generate_readme_content and assert expected output
-    assert True
+pytestmark = pytest.mark.unit
 
-def test_generate_readme_content_boundary_and_negative_inputs() -> None:
-    """Verifies generate_readme_content handles empty, None, and edge inputs."""
-    # TODO: Call generate_readme_content with boundary arguments
-    assert True
 
-def test_main_success() -> None:
-    """Verifies main execution with valid inputs."""
-    # TODO: Call main and assert expected output
-    assert True
+@pytest.fixture
+def generator(load_script):
+    return load_script("skills/custom/readme-designer/scripts/scaffold_readme.py")
 
-def test_main_boundary_and_negative_inputs() -> None:
-    """Verifies main handles empty, None, and edge inputs."""
-    # TODO: Call main with boundary arguments
-    assert True
+
+@pytest.fixture
+def readme(generator):
+    return generator.generate_readme_content(
+        "Demo Project", "A punchy tagline", "A longer description.",
+        "Test Author", "Apache 2.0")
+
+
+class TestGeneration:
+    def test_project_name_appears_in_the_h1(self, readme):
+        h1 = next(line for line in readme.splitlines() if line.startswith("# "))
+        assert "Demo Project" in h1
+
+    def test_tagline_and_description_are_included(self, readme):
+        assert "A punchy tagline" in readme and "A longer description." in readme
+
+    def test_author_and_licence_are_included(self, readme):
+        assert "Test Author" in readme and "Apache 2.0" in readme
+
+    def test_output_is_not_trivially_short(self, readme):
+        assert len(readme.splitlines()) > 20
+
+    def test_special_characters_in_the_name_survive(self, generator):
+        content = generator.generate_readme_content(
+            "C++ & Friends", "t", "d", "a", "MIT")
+        assert "C++ & Friends" in content
+
+
+class TestGeneratedReadmeSatisfiesTheAuditor:
+    def test_the_generator_output_passes_its_own_audit(self, generator, load_script, tmp_path):
+        """
+        This skill both writes READMEs and grades them. If its own output
+        scored badly, the grader and the generator would be describing
+        different standards.
+        """
+        audit = load_script("skills/custom/readme-designer/scripts/audit_readme.py")
+        path = tmp_path / "README.md"
+        path.write_text(generator.generate_readme_content(
+            "Demo", "Tagline", "Description.", "Author", "Apache 2.0"), encoding="utf-8")
+        result = audit.audit_markdown_file(path, tmp_path)
+        assert result["score"] >= 60, f"generator output scored {result['score']}"

@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Actions are pinned to major-version tags rather than commit SHAs, which
+  # means a compromised tag would be picked up silently. Dependabot keeps the
+  # references current and surfaces each change as a reviewable pull request;
+  # moving to full SHA pinning is the stronger next step.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "deps"

@@ -3,6 +3,13 @@
   "skill_name": "readme-designer",
   "version": "1.0.0",
   "attestation_status": "VERIFIED",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "workspace-write"
+  },
+  "capabilities_rationale": "audit_readme.py is read-only; scaffold_readme.py writes a README into the target repository. Link checking is filesystem-only -- no URL is ever fetched.",
   "attested_by": "Kunal Suri",
   "attestation_date": "2026-08-29",
   "tested_platforms": [
@@ -10,23 +17,35 @@
       "platform": "Claude Code",
       "model": "claude-3-7-sonnet",
       "status": "PASS",
-      "notes": "Verified aesthetic refactoring, vertical <br/> breathing room injection, comparative matrix generation, and strict link resolution."
+      "notes": "Verified aesthetic refactoring, vertical <br/> breathing room injection, comparative matrix generation, and strict link resolution.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
     },
     {
       "platform": "Google Antigravity",
       "model": "gemini-3.7-flash",
       "status": "PASS",
-      "notes": "Verified full markdown diagnostic auditing (audit_readme.py) scoring 100/100 Grade A+ and automated template scaffolding."
+      "notes": "Verified full markdown diagnostic auditing (audit_readme.py) scoring 100/100 Grade A+ and automated template scaffolding.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
     }
   ],
   "performance_summary": {
     "success_rate_percent": 100,
     "average_token_consumption": 1150,
-    "recovery_resilience": "High"
+    "recovery_resilience": "High",
+    "methodology_caveat": "average_token_consumption and recovery_resilience are illustrative, not the output of a documented, repeatable measurement (no run logs, no sample size, no definition of what 'recovery' was tested against). Treat them as approximate rather than as measured facts until a real methodology is attached."
   },
   "provenance": {
     "source_type": "original",
     "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
     "license": "Apache-2.0"
-  }
+  },
+  "security_audit": {
+    "tool": "scripts/audit_skill_safety.py",
+    "method": "AST-based capability analysis of every script in the skill, plus a scan of every Markdown file for instruction-surface attacks (invisible and bidirectional Unicode, directive-bearing HTML comments, encoded payloads, pipe-to-shell, credential exfiltration). The capabilities the code actually has are compared against the 'capabilities' block above; the build fails if the code exceeds its declaration.",
+    "last_run_date": "2026-08-30",
+    "last_run_result": "PASS",
+    "enforcement": "Unlike the tested_platforms rows above, this is not a point-in-time claim: it re-runs on every push and pull request, and the content digest below means the attestation stops matching if any file here is edited without re-attesting.",
+    "reproduce": "python scripts/audit_skill_safety.py --skill readme-designer --strict"
+  },
+  "content_digest": "sha256:e71bd85f50fe7d523dd267d9a8b6636ca87182e9992eeafd7428aed3f10f01c4"
 }
