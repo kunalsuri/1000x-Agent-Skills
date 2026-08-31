@@ -34,8 +34,9 @@ def compare_trees(left: Path, right: Path, differences: list, prefix: str = "") 
             differences.append(f"missing from the loaded copy: {prefix}{name}")
     for name in result.right_only:
         differences.append(f"only in the loaded copy: {prefix}{name}")
-    for name in result.diff_files:
-        differences.append(f"content differs: {prefix}{name}")
+    for name in result.common_files:
+        if not filecmp.cmp(left / name, right / name, shallow=False):
+            differences.append(f"content differs: {prefix}{name}")
     for name in result.common_dirs:
         compare_trees(left / name, right / name, differences, f"{prefix}{name}/")
 
