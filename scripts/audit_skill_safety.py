@@ -72,8 +72,17 @@ DEFAULT_DECLARATION: Dict[str, str] = {
 NETWORK_MODULES = {
     "socket", "ssl", "urllib", "http", "ftplib", "smtplib", "telnetlib",
     "requests", "httpx", "aiohttp", "xmlrpc", "poplib", "imaplib",
-    "webbrowser",
+    "webbrowser", "websockets", "paramiko", "boto3", "urllib3",
 }
+
+# The verifier's table is deliberately wider still: it also treats asyncio,
+# signal, types and code as capability-granting. Those stay verifier-only on
+# purpose. They are stdlib modules with overwhelmingly non-capability uses, and
+# forcing every skill that imports asyncio to declare 'network: outbound' would
+# manufacture false declarations -- the exact failure this auditor exists to
+# catch. The verifier faces a stranger's code and is allowed to be blunt; this
+# tool grades honesty and has to be precise. CAP-UNPROVEN below is what closes
+# the gap generally, without guessing.
 PROCESS_MODULES = {"subprocess", "multiprocessing", "ctypes", "pty"}
 DYNAMIC_MODULES = {"pickle", "marshal", "importlib", "imp", "runpy"}
 
@@ -267,6 +276,42 @@ def is_allowlisted(finding: Dict[str, Any], allowlist: List[Dict[str, str]]) -> 
 # Python surface
 # --------------------------------------------------------------------------
 
+# Modules that ship with the interpreter. Anything else a skill imports comes
+# from outside and cannot be reasoned about structurally: the AST sees the name
+# `anthropic` or `mcp`, not the socket or the fork inside it.
+STDLIB_MODULES: Set[str] = set(getattr(sys, "stdlib_module_names", ()))
+
+
+def _local_module_names(root: Path) -> Set[str]:
+    """Module names importable from inside the bundle itself.
+
+    `from connections import create_connection` next to connections.py is a
+    local import, not a third-party dependency, and must not be flagged.
+    """
+    names: Set[str] = set()
+    if not root.is_dir():
+        return names
+    for path in root.rglob("*"):
+        if path.is_dir() and (path / "__init__.py").exists():
+            names.add(path.name)
+        elif path.suffix == ".py":
+            names.add(path.stem)
+    return names
+
+
+def _module_roots_with_lines(tree: ast.AST) -> Dict[str, int]:
+    """Top-level module name -> first line it is imported on."""
+    roots: Dict[str, int] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                roots.setdefault(alias.name.split(".")[0], node.lineno)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module and not node.level:
+                roots.setdefault(node.module.split(".")[0], node.lineno)
+    return roots
+
+
 def _module_roots(tree: ast.AST) -> Set[str]:
     roots: Set[str] = set()
     for node in ast.walk(tree):
@@ -278,6 +323,26 @@ def _module_roots(tree: ast.AST) -> Set[str]:
             if node.module and not node.level:
                 roots.add(node.module.split(".")[0])
     return roots
+
+
+def _is_unprovable_import(root: str, local_modules: Set[str]) -> bool:
+    """True for an import whose capabilities this auditor cannot derive.
+
+    A name in one of the capability tables is already accounted for -- the
+    table says what it grants. A stdlib name is derivable in principle and is
+    covered by the tables plus the call-level checks. A name defined inside the
+    bundle is local source that is itself audited. Everything else is a
+    third-party package: the structural derivation stops at its import line,
+    and reporting 'none' for such a skill states more than the evidence
+    supports.
+    """
+    if root in NETWORK_MODULES or root in PROCESS_MODULES or root in DYNAMIC_MODULES:
+        return False
+    if root in STDLIB_MODULES or root in local_modules:
+        return False
+    # An empty stdlib set means the interpreter did not expose the list; say
+    # nothing rather than flag every import in the repository.
+    return bool(STDLIB_MODULES)
 
 
 def _open_is_writable(node: ast.Call) -> bool:
@@ -293,7 +358,9 @@ def _open_is_writable(node: ast.Call) -> bool:
     return bool(mode) and any(ch in mode for ch in "wax+")
 
 
-def observe_python_file(path: Path, rel: str) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
+def observe_python_file(path: Path, rel: str,
+                        local_modules: Set[str] = frozenset(),
+                        ) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
     """
     Return (observed capabilities, findings) for a single Python file.
 
@@ -330,7 +397,7 @@ def observe_python_file(path: Path, rel: str) -> Tuple[Dict[str, str], List[Dict
 
     evidence: List[Dict[str, Any]] = []
 
-    for root in _module_roots(tree):
+    for root, lineno in sorted(_module_roots_with_lines(tree).items()):
         if root in NETWORK_MODULES:
             raise_to("network", "outbound")
             evidence.append(_finding("PY-CAPABILITY", "INFO", rel,
@@ -343,6 +410,18 @@ def observe_python_file(path: Path, rel: str) -> Tuple[Dict[str, str], List[Dict
             raise_to("dynamic_code_execution", "eval")
             evidence.append(_finding("PY-CAPABILITY", "INFO", rel,
                                      f"imports '{root}' -> dynamic_code_execution: eval"))
+        if _is_unprovable_import(root, local_modules):
+            findings.append(_finding(
+                "CAP-UNPROVEN", "HIGH", rel,
+                f"imports '{root}', which is neither in the standard library, nor "
+                f"local to this bundle, nor in the capability tables above. Its "
+                f"capabilities cannot be derived from this source: the AST sees the "
+                f"name, not what the package does when called. Whatever '{root}' can "
+                f"do, this skill can do. Declare the capabilities it confers and pin "
+                f"this finding in docs/safety-allowlist.json with the reasoning, or "
+                f"drop the dependency.",
+                lineno,
+            ))
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -602,12 +681,13 @@ def audit_skill(skill_dir: Path, repo_root: Path) -> Dict[str, Any]:
     observed = dict(DEFAULT_DECLARATION)
     findings: List[Dict[str, Any]] = []
     py_count = md_count = 0
+    local_modules = _local_module_names(skill_dir)
 
     for path in _iter_files(skill_dir):
         rel = path.relative_to(repo_root).as_posix()
         if path.suffix == ".py":
             py_count += 1
-            file_obs, file_findings = observe_python_file(path, rel)
+            file_obs, file_findings = observe_python_file(path, rel, local_modules)
             _merge_observed(observed, file_obs)
             findings.extend(file_findings)
         elif path.suffix.lower() in MARKDOWN_SUFFIXES:
@@ -649,7 +729,9 @@ def audit_component(path: Path, repo_root: Path, declared_raw: Dict[str, str],
         declared[cap] = value
 
     if path.suffix == ".py":
-        observed, file_findings = observe_python_file(path, rel)
+        # A standalone component imports its neighbours in the same directory.
+        observed, file_findings = observe_python_file(
+            path, rel, _local_module_names(path.parent))
         findings.extend(file_findings)
     else:
         observed = dict(DEFAULT_DECLARATION)

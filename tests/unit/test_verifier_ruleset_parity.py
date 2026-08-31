@@ -83,6 +83,31 @@ class TestDetectionTablesNeverWeaken:
             f"bidi characters known to the auditor but not the verifier: "
             f"{[f'U+{cp:04X}' for cp in sorted(missing)]}")
 
+    def test_both_tools_agree_on_what_the_standard_library_is(self, auditor, verifier):
+        """
+        Both derive the unprovable-import check from this set. If the verifier's
+        were larger, an import the auditor calls third-party would pass the
+        verifier as stdlib -- the weaker direction this file exists to forbid.
+        """
+        extra = getattr(verifier, "STDLIB_MODULES") - getattr(auditor, "STDLIB_MODULES")
+        assert extra == set(), (
+            f"the verifier treats these as standard library while the auditor "
+            f"does not, so it would accept imports the auditor flags: {sorted(extra)}")
+
+    def test_verifier_flags_every_unprovable_import_the_auditor_flags(self, auditor, verifier):
+        """The predicate itself, not just its inputs, must not be weaker."""
+        cases = [
+            ("anthropic", frozenset()),
+            ("mcp", frozenset()),
+            ("yaml", frozenset()),
+            ("some_package_nobody_has_heard_of", frozenset()),
+        ]
+        for root, local in cases:
+            if auditor._is_unprovable_import(root, local):
+                assert verifier.is_unprovable_import(root, local), (
+                    f"the auditor flags '{root}' as unprovable but the verifier "
+                    f"does not")
+
     def test_verifier_knows_every_obfuscation_pattern(self, auditor, verifier):
         auditor_labels = {label for label, _ in auditor.OBFUSCATION_PATTERNS}
         verifier_labels = {label for label, _ in verifier.OBFUSCATION_PATTERNS}

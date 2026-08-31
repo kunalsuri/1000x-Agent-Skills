@@ -823,11 +823,33 @@ class TestConventionDiscoveredTests:
     their top-level code can do, not excused.
     """
 
-    def test_a_benign_test_file_is_only_information(self, verifier, bundle):
+    def test_a_benign_test_file_is_graded_by_what_it_can_do(self, verifier, bundle):
+        """Autorun grading stays INFO: nothing at this file's top level acts.
+
+        The verdict is nevertheless needs_review, and for a reason worth being
+        explicit about -- `import pytest` is a third-party package whose
+        capabilities cannot be derived from the bundle, so EXT-CAP-UNPROVEN
+        fires. That is the correct answer for a stranger's bundle: a test file
+        importing an arbitrary package is the exact shape the published bypass
+        used. This asserted VERDICT_CLEAN until the unprovable-import check
+        existed, which is to say it asserted that an unreadable dependency was
+        nothing to look at.
+        """
         root = bundle(files={
             "tests/test_helper.py":
                 "import pytest\n\npytestmark = pytest.mark.unit\n\n\n"
                 "def test_it():\n    assert True\n",
+        })
+        record = verifier.verify_bundle(root)
+        assert severity_of(record, "EXT-AUTORUN") == {"INFO"}
+        assert severity_of(record, "EXT-CAP-UNPROVEN") == {"HIGH"}
+        assert record["verdict"] == verifier.VERDICT_NEEDS_REVIEW
+
+    def test_a_stdlib_only_test_file_is_clean(self, verifier, bundle):
+        """The counterpart: with nothing unprovable imported, the verdict holds."""
+        root = bundle(files={
+            "tests/test_helper.py":
+                "import json\n\n\ndef test_it():\n    assert json.dumps({}) == '{}'\n",
         })
         record = verifier.verify_bundle(root)
         assert severity_of(record, "EXT-AUTORUN") == {"INFO"}
