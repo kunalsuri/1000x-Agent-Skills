@@ -106,7 +106,7 @@ flowchart TD
 | **Trigger Evaluation** | Blind activation / high false triggers | **Positive and negative prompt datasets** (`evals/test-cases.json`), present and schema-checked for every skill. Automated scoring against a live model is not yet wired up — see [Enforced vs. recorded](#-enforced-vs-recorded) |
 | **Multi-Agent Parity** | Fragmented per IDE / out-of-sync instructions | **Synchronized across Claude Code, Antigravity, Cursor & Codex** |
 | **Deterministic Tooling** | Unassisted LLM hallucinations | **Integrated Python CLI engines + semantic LLM verification** |
-| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a 400+-test pytest suite, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
+| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a pytest suite with 400+ tests, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
 
 <br/>
 
