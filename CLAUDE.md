@@ -13,12 +13,15 @@
 - **Digest**: `python scripts/skill_digest.py --check`
 - **Release**: `python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict`
 - **Verify a third-party skill**: `python skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py <dir>`
+- **Verify everything installed**: same script with `<dir> --collection`; `--compare <record.json>` reports what changed since a stored record.
+- **Demo**: `python skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py demo/installed-skills --collection`
 - **Run**: `python scripts/install_to_agent.py --target claude --all`
 
 ## Directory Architecture
+- `demo/`: Committed sample bundles -- an honest skill, the same skill after a silent update, and the stored record from the first review -- that `third-party-skill-verifier` is run over. Inert fixtures; `tests/unit/test_demo_bundles.py` re-runs the demo so its quoted output cannot rot.
 - `docs/`: Specification schemas (`schemas/attestation.schema.json`), the reviewed safety-exemption list (`safety-allowlist.json`), tooling capability declarations, authoring standards, and benchmark documentation.
 - `scripts/`: Repository maintenance and validation CLI tools (`validate_skills.py`, `audit_skill_safety.py`, `skill_digest.py`, `install_to_agent.py`).
-- `skills/`: Production-ready agent skills catalog partitioned into `anthropic/`, `custom/`, and `google/`.
+- `skills/`: Production-ready agent skills catalog partitioned into `anthropic/` (vendored) and `custom/` (written here). A category directory exists only once it holds a skill.
 - `tests/`: Pytest suite covering the validators, the safety auditor and every skill script.
 - `utils/`: Shared utilities, JSON schema definitions, and helper scripts for skill execution.
 

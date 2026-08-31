@@ -92,9 +92,9 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 TOOL_NAME = "verify_skill_bundle.py"
-TOOL_VERSION = "1.0.0"
-RECORD_SCHEMA_VERSION = "1.0.0"
-RULESET_VERSION = "2026.08.31"
+TOOL_VERSION = "1.1.0"
+RECORD_SCHEMA_VERSION = "1.1.0"
+RULESET_VERSION = "2026.09.01"
 
 DISCLAIMER = (
     "This record lists patterns that were and were not found by a static "
@@ -301,6 +301,18 @@ BENIGN_BINARY_SUFFIXES = {
 }
 
 CODE_CLASSES = {"python", "shell", "other-code", "bytecode", "native", "archive"}
+
+# Files that name code the bundle does not contain. Installing the skill's
+# requirements installs these too, and nothing here reads them -- so they are
+# reported as surface, in the same spirit as EXT-CAP-UNPROVEN.
+DEPENDENCY_MANIFESTS = {
+    "requirements.txt", "requirements-dev.txt", "requirements_dev.txt",
+    "pyproject.toml", "setup.cfg", "pipfile", "package.json",
+    "gemfile", "cargo.toml", "go.mod",
+}
+DEPENDENCY_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._@/+-]*")
+QUOTED_STRING_RE = re.compile(r"[\"']([^\"']+)[\"']")
+MAX_DEPENDENCIES_LISTED = 12
 
 CLASS_LABEL = {
     "shell": "shell script",
@@ -1701,6 +1713,104 @@ def compare_capabilities(observed: Dict[str, str], declared: Dict[str, str],
 # Per-file structural findings
 # ---------------------------------------------------------------------------
 
+def _dependency_names(rel: str, text: str) -> List[str]:
+    """
+    Package names a manifest asks a package manager to install.
+
+    Deliberately shallow: this is not a resolver, and it does not pretend to
+    be one. Naming what would be installed is the whole point -- a name is
+    enough for a reader to look a package up, and anything more would imply
+    this tool had read the dependency, which it never does.
+    """
+    name = rel.rsplit("/", 1)[-1].lower()
+    found: List[str] = []
+
+    if name == "package.json":
+        try:
+            data = json.loads(text)
+        except (json.JSONDecodeError, ValueError):
+            return []
+        if not isinstance(data, dict):
+            return []
+        for key in ("dependencies", "devDependencies", "optionalDependencies",
+                    "peerDependencies"):
+            block = data.get(key)
+            if isinstance(block, dict):
+                found.extend(str(k) for k in block)
+        return found
+
+    if name in ("pyproject.toml", "setup.cfg", "cargo.toml", "pipfile", "go.mod"):
+        # Every dependency table in these formats is either a list of quoted
+        # requirement strings or a run of `name = version` lines, and both
+        # start with the package name. Section headers switch the run on and
+        # off; anything outside one is ignored rather than guessed at.
+        in_deps = False
+        for raw in text.splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            low = line.lower()
+            if low.startswith("["):
+                in_deps = "depend" in low or "require" in low
+                continue
+            if low.startswith(("dependencies", "install_requires", "require")):
+                in_deps = True
+                for quoted in QUOTED_STRING_RE.findall(line):
+                    inline = DEPENDENCY_NAME_RE.match(quoted)
+                    if inline:
+                        found.append(inline.group(0))
+                if line.endswith(("]", ")")):
+                    in_deps = False
+                continue
+            if line in ("]", ")", "},", "}"):
+                in_deps = False
+                continue
+            if not in_deps:
+                continue
+            match = DEPENDENCY_NAME_RE.match(line.strip('"\' ,'))
+            if match:
+                found.append(match.group(0))
+        return found
+
+    # requirements.txt and friends: one requirement per line.
+    for raw in text.splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or line.startswith("-"):
+            continue
+        match = DEPENDENCY_NAME_RE.match(line)
+        if match:
+            found.append(match.group(0))
+    return found
+
+
+def scan_dependency_manifest(rel: str, text: str) -> List[Dict[str, Any]]:
+    """
+    Report the code a bundle pulls in but does not contain.
+
+    EXT-CAP-UNPROVEN marks where an *import* outran the analysis. This marks
+    where the *install* does: a package named here is downloaded and, for
+    several ecosystems, gets to run its own code at install time, before any
+    of the skill's own files are ever read.
+    """
+    if rel.rsplit("/", 1)[-1].lower() not in DEPENDENCY_MANIFESTS:
+        return []
+    names = sorted({n for n in _dependency_names(rel, text) if n})
+    if not names:
+        return []
+    shown = ", ".join(names[:MAX_DEPENDENCIES_LISTED])
+    if len(names) > MAX_DEPENDENCIES_LISTED:
+        shown += f", and {len(names) - MAX_DEPENDENCIES_LISTED} more"
+    return [finding(
+        "EXT-DEPENDENCY", "WARN", rel,
+        f"Installs {len(names)} package(s) that are not in this bundle: {shown}. "
+        f"Their code is not analysed here and is not in the capability summary; "
+        f"in several ecosystems a package also runs code at install time. "
+        f"Installing this skill means trusting these too.",
+        snippet=",".join(names),
+        owasp="AST01",
+    )]
+
+
 def scan_file_class(item: BundleFile) -> List[Dict[str, Any]]:
     """Findings that follow from what a file *is*, before reading it."""
     out: List[Dict[str, Any]] = []
@@ -1818,6 +1928,100 @@ def scan_file_class(item: BundleFile) -> List[Dict[str, Any]]:
 # Assembly
 # ---------------------------------------------------------------------------
 
+def compare_to_baseline(findings: List[Dict[str, Any]], digest: str,
+                        baseline: Dict[str, Any]) -> Tuple[Dict[str, Any],
+                                                           List[Dict[str, Any]]]:
+    """
+    Say what changed since a stored record, rather than only that something did.
+
+    --expect-digest answers "is this the same bytes" with a yes or a no. The
+    question a reviewer actually has on the second look is "what is different
+    now", and the answer is the diff of the findings: a skill that was read
+    once and updated quietly is the rug-pull case, and the useful output is
+    the specific new line, not the fact of change.
+
+    Findings are matched on fingerprint, which hashes the triggering text and
+    not its line number, so code that merely moved does not read as new.
+    """
+    if not isinstance(baseline, dict) or "findings" not in baseline \
+            or "bundle" not in baseline:
+        raise ToolError(
+            "--compare expects a verification record written by this tool "
+            "(the output of --json), not an arbitrary JSON file."
+        )
+
+    base_findings = {f.get("fingerprint"): f for f in baseline.get("findings", [])
+                     if isinstance(f, dict)}
+    now_findings = {f["fingerprint"]: f for f in findings}
+    new = [f for fp, f in now_findings.items() if fp not in base_findings]
+    resolved = [f for fp, f in base_findings.items() if fp not in now_findings]
+    new.sort(key=lambda f: (SEVERITY_ORDER[f["severity"]], f["path"], f["check"]))
+
+    baseline_digest = str(baseline.get("bundle", {}).get("digest", ""))
+    digest_changed = baseline_digest != digest
+
+    comparison = {
+        "baseline_verified_at": baseline.get("verified_at"),
+        "baseline_ruleset_version": baseline.get("tool", {}).get("ruleset_version"),
+        "baseline_digest": baseline_digest,
+        "digest_changed": digest_changed,
+        "new_findings": [
+            {"check": f["check"], "severity": f["severity"], "path": f["path"],
+             "fingerprint": f["fingerprint"]} for f in new
+        ],
+        "resolved_findings": [
+            {"check": f.get("check"), "severity": f.get("severity"),
+             "path": f.get("path"), "fingerprint": fp}
+            for fp, f in base_findings.items() if fp not in now_findings
+        ],
+    }
+
+    drift: List[Dict[str, Any]] = []
+    worst = min((SEVERITY_ORDER[f["severity"]] for f in new), default=None)
+
+    if digest_changed:
+        severity = "CRITICAL" if worst is not None and worst <= SEVERITY_ORDER["HIGH"] \
+            else "WARN"
+        summary = ", ".join(sorted({f["check"] for f in new})) or "no new findings"
+        drift.append(finding(
+            "EXT-BASELINE-DRIFT", severity, ".",
+            f"The bundle has changed since the record of "
+            f"{baseline.get('verified_at', 'an earlier run')}. New findings: "
+            f"{summary}. Resolved since then: {len(resolved)}. The review that "
+            f"produced the baseline covered different bytes than these; read "
+            f"the new findings before trusting the earlier decision.",
+            snippet=f"drift:{baseline_digest}->{digest}",
+            owasp="AST02",
+        ))
+    elif new or resolved:
+        drift.append(finding(
+            "EXT-RULESET-DRIFT", "WARN", ".",
+            f"The bundle is byte-for-byte what it was at the baseline, but this "
+            f"ruleset ({RULESET_VERSION}) reports {len(new)} finding(s) the "
+            f"baseline did not and no longer reports {len(resolved)}. Nothing on "
+            f"disk changed; what changed is what the tool knows.",
+            snippet=f"ruleset:{baseline.get('tool', {}).get('ruleset_version')}"
+                    f"->{RULESET_VERSION}",
+        ))
+    else:
+        drift.append(finding(
+            "EXT-BASELINE-MATCH", "INFO", ".",
+            f"Identical to the record of {baseline.get('verified_at', 'the baseline')}: "
+            f"same digest, same findings. This says the bundle did not change; it "
+            f"says nothing about whether it was ever safe.",
+            snippet=f"match:{digest}",
+        ))
+
+    return comparison, drift
+
+
+def worst_verdict(records: List[Dict[str, Any]]) -> str:
+    """The worst verdict in a set decides the exit code for the whole run."""
+    return max((r["verdict"] for r in records),
+               key=lambda verdict: VERDICT_EXIT[verdict],
+               default=VERDICT_CLEAN)
+
+
 def verdict_for(findings: List[Dict[str, Any]]) -> str:
     severities = {f["severity"] for f in findings}
     if BLOCKING_SEVERITY in severities:
@@ -1828,7 +2032,8 @@ def verdict_for(findings: List[Dict[str, Any]]) -> str:
 
 
 def verify_bundle(root: Path, expect_digest: Optional[str] = None,
-                  now: Optional[str] = None) -> Dict[str, Any]:
+                  now: Optional[str] = None,
+                  baseline: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Verify one skill bundle and return a complete, serialisable record.
 
@@ -1872,6 +2077,7 @@ def verify_bundle(root: Path, expect_digest: Optional[str] = None,
             continue
 
         findings.extend(scan_text_objective(item.text, item.rel))
+        findings.extend(scan_dependency_manifest(item.rel, item.text))
         destinations |= extract_destinations(item.text)
 
         if item.klass in ("prose", "text-data") or item.rel == "SKILL.md":
@@ -1929,6 +2135,11 @@ def verify_bundle(root: Path, expect_digest: Optional[str] = None,
                 owasp="AST02",
             ))
 
+    comparison: Optional[Dict[str, Any]] = None
+    if baseline is not None:
+        comparison, drift = compare_to_baseline(findings, digest, baseline)
+        findings.extend(drift)
+
     findings.sort(key=lambda f: (SEVERITY_ORDER[f["severity"]], f["path"],
                                  f["line"] or 0, f["check"]))
 
@@ -1946,6 +2157,7 @@ def verify_bundle(root: Path, expect_digest: Optional[str] = None,
         },
         "observed_capabilities": observed,
         "declared_capabilities": declared,
+        "comparison": comparison,
         "network_destinations": sorted(destinations),
         "findings": findings,
         "counts": {sev: sum(1 for f in findings if f["severity"] == sev)
@@ -2044,6 +2256,27 @@ def render_report(record: Dict[str, Any], show_info: bool) -> str:
         out.append("")
         out.append(" FINDINGS: none at or above WARN.")
 
+    comparison = record.get("comparison")
+    if comparison:
+        out.append("")
+        out.append(" CHANGES SINCE THE BASELINE RECORD")
+        out.append(f"   baseline : {comparison['baseline_verified_at']} "
+                   f"(ruleset {comparison['baseline_ruleset_version']})")
+        out.append("   bundle   : " + ("CHANGED on disk since that record"
+                                       if comparison["digest_changed"]
+                                       else "byte-for-byte unchanged"))
+        if comparison["new_findings"]:
+            out.append(f"   new      : {len(comparison['new_findings'])}")
+            for item in comparison["new_findings"]:
+                out.append(f"      + {SEVERITY_LABEL[item['severity']]} "
+                           f"{item['check']}  {item['path']}")
+        else:
+            out.append("   new      : none")
+        if comparison["resolved_findings"]:
+            out.append(f"   resolved : {len(comparison['resolved_findings'])}")
+            for item in comparison["resolved_findings"]:
+                out.append(f"      - {item['check']}  {item['path']}")
+
     counts = record["counts"]
     out.append("")
     out.append("-" * 78)
@@ -2054,6 +2287,76 @@ def render_report(record: Dict[str, Any], show_info: bool) -> str:
     out.append("")
     out.extend(_wrap(DISCLAIMER, 78, " "))
     return "\n".join(out)
+
+
+VERDICT_SHORT = {
+    VERDICT_DO_NOT_INSTALL: "DO NOT INSTALL",
+    VERDICT_NEEDS_REVIEW: "NEEDS REVIEW",
+    VERDICT_CLEAN: "no known findings",
+}
+
+
+def render_summary(records: List[Dict[str, Any]]) -> str:
+    """
+    One line per bundle, worst first.
+
+    Scanning a directory of installed skills is the case this exists for, and
+    there the per-bundle reports are too long to hold in the head at once. The
+    table is a reading order, not a verdict on the set: nothing here is graded
+    against anything else.
+    """
+    out: List[str] = []
+    out.append("=" * 78)
+    out.append(f" [SUMMARY] {len(records)} bundle(s), worst first")
+    out.append("=" * 78)
+    ordered = sorted(
+        records,
+        key=lambda r: (VERDICT_EXIT[r["verdict"]] * -1,
+                       -r["counts"]["CRITICAL"], -r["counts"]["HIGH"],
+                       r["bundle"]["name"]),
+    )
+    for record in ordered:
+        counts = record["counts"]
+        out.append(f" {VERDICT_SHORT[record['verdict']]:<18} "
+                   f"CRIT {counts['CRITICAL']:<3} HIGH {counts['HIGH']:<3} "
+                   f"WARN {counts['WARN']:<3}  {record['bundle']['name']}")
+    out.append("=" * 78)
+    out.extend(_wrap(DISCLAIMER, 78, " "))
+    return "\n".join(out)
+
+
+def resolve_targets(raw_targets: List[str], collection: bool) -> List[Path]:
+    """Turn the command line into the list of bundle directories to read."""
+    targets: List[Path] = []
+    for raw in raw_targets:
+        path = Path(raw).expanduser()
+        if not collection:
+            targets.append(path)
+            continue
+        if not path.is_dir():
+            raise ToolError(
+                f"--collection needs a directory of skill directories: {path}")
+        members = sorted(child for child in path.iterdir()
+                         if child.is_dir() and not child.name.startswith("."))
+        if not members:
+            raise ToolError(
+                f"{path} holds no skill directories to verify. Without "
+                f"--collection the directory itself would be read as one bundle.")
+        targets.extend(members)
+    return targets
+
+
+def load_baseline(path: str) -> Dict[str, Any]:
+    """Read a stored record, refusing anything that is not one."""
+    try:
+        text = Path(path).expanduser().read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ToolError(f"Cannot read the baseline record {path}: {exc}")
+    try:
+        data = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ToolError(f"The baseline record {path} is not valid JSON: {exc}")
+    return data
 
 
 # ---------------------------------------------------------------------------
@@ -2077,7 +2380,17 @@ def build_parser() -> argparse.ArgumentParser:
             "never fetches, writes, extracts or executes anything."
         ),
     )
-    parser.add_argument("target", help="Directory containing the unpacked skill.")
+    parser.add_argument("targets", nargs="+", metavar="target",
+                        help="Directory containing an unpacked skill. Several "
+                             "may be given.")
+    parser.add_argument("--collection", action="store_true",
+                        help="Treat each target as a directory OF skills and "
+                             "verify every immediate subdirectory -- the shape "
+                             "of ~/.claude/skills or a marketplace checkout.")
+    parser.add_argument("--compare", default=None, metavar="RECORD.json",
+                        help="Diff this run against a record kept from an "
+                             "earlier one, and report what changed rather than "
+                             "only that something did.")
     parser.add_argument("--json", action="store_true",
                         help="Emit the full verification record as JSON. "
                              "Redirect it to keep a dated receipt.")
@@ -2103,18 +2416,45 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
 
     try:
-        record = verify_bundle(Path(args.target).expanduser(),
-                               expect_digest=args.expect_digest, now=args.now)
+        targets = resolve_targets(args.targets, args.collection)
+        if len(targets) > 1 and (args.compare or args.expect_digest):
+            raise ToolError(
+                "--compare and --expect-digest pin one bundle to one record, "
+                "so they cannot be used across several targets. Run them one "
+                "bundle at a time."
+            )
+        baseline = load_baseline(args.compare) if args.compare else None
+        records = [verify_bundle(target, expect_digest=args.expect_digest,
+                                 now=args.now, baseline=baseline)
+                   for target in targets]
     except ToolError as exc:
         sys.stderr.write(f"[ERROR] {exc}\n")
         return EXIT_TOOL_ERROR
 
+    single = len(records) == 1
     if args.json:
-        print(json.dumps(record, indent=2, sort_keys=False))
+        # A single-bundle record keeps the exact shape earlier receipts were
+        # written in; only a multi-bundle run needs an envelope around it.
+        payload = records[0] if single else {
+            "record_schema_version": RECORD_SCHEMA_VERSION,
+            "tool": {"name": TOOL_NAME, "version": TOOL_VERSION,
+                     "ruleset_version": RULESET_VERSION},
+            "verified_at": records[0]["verified_at"],
+            "bundles": records,
+            "verdict": worst_verdict(records),
+            "disclaimer": DISCLAIMER,
+        }
+        print(json.dumps(payload, indent=2, sort_keys=False))
     else:
-        print(render_report(record, args.show_info))
+        for index, record in enumerate(records):
+            if index:
+                print()
+            print(render_report(record, args.show_info))
+        if not single:
+            print()
+            print(render_summary(records))
 
-    return VERDICT_EXIT[record["verdict"]]
+    return VERDICT_EXIT[worst_verdict(records)]
 
 
 if __name__ == "__main__":

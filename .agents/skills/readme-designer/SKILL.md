@@ -1,270 +1,148 @@
 ---
 name: readme-designer
-version: 1.0.0
+version: 2.0.0
 author: Kunal Suri <kunal.suri@cea.fr>
-description: Transform, modernize, and design world-class repository READMEs and documentation for maximum visual impact, readability, and engagement. Applies structured spacing with <br/>, thematic dividers ---, bold hierarchy, comparison matrices, Mermaid flowcharts, ASCII art frames, shields/badges, and GitHub alert callouts. Use when creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, repository documentation, or landing page.
+description: Rewrite a README so a reader can tell what the project is and run it without scrolling, then check the result against a scoring rubric and fix every broken link. Cuts bloat, ornament and self-awarded badges; keeps the promise, the command, the output and the links. Use when creating, redesigning, modernizing, shortening, improving the readability of, or polishing a project README, repository documentation, or landing page.
 compatibility: [claude-code, antigravity, cursor, codex]
 allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
-tags: [readme, documentation, modern-design, aesthetics, formatting, markdown, visual-hierarchy, open-source]
+tags: [readme, documentation, technical-writing, markdown, editing, open-source]
 license: Apache-2.0
 ---
 
-# 🎨 README & Documentation Designer
+# README Designer
 
-## Purpose
-Empowers the agent to act as an expert technical documentation architect and visual design specialist. Transforms dry, cramped, or unformatted repository markdown files into world-class, high-status documentation that captivates readers, ensures effortless scanning, and maximizes developer adoption.
+Make a README a reader finishes.
 
----
+## What this optimises for
 
-## 📐 Core Visual Design Principles
+A README is read by someone deciding, in about twenty seconds, whether this
+project is worth their afternoon. They want to know what it is, see it run,
+and find the rest. Everything that delays those three things is cost.
 
-Every modernized README is built upon six visual engineering principles:
+This skill previously optimised for the opposite. Its rubric awarded points
+for `<br/>` tags, hero banners, badge rows, Mermaid diagrams and callouts,
+and rubrics get optimised against: the result was a 736-line README that
+scored A+ while the one command a reader needed sat at line 470. Version 2
+pays for orientation, substance, restraint, brevity and working links, and
+pays nothing for looks.
 
-1. **🌬️ Generous Breathing Room (`<br/>`)**:
-   - Insert purposeful `<br/>` tags before and after headers, alerts, badges, code blocks, and diagrams.
-   - Prevent dense walls of text by maintaining generous vertical whitespace.
+## The rubric
 
-2. **✂️ Distinct Section Partitioning (`---`)**:
-   - Separate distinct conceptual sections with horizontal dividers (`---`) surrounded by `<br/>` spacing.
-   - Creates crisp visual stopping points that guide the reader's eye.
+`scripts/audit_readme.py` scores out of 100. Every number below is a
+deliberate opinion, not a measurement:
 
-3. **🔤 Strong Typography & Bold Hierarchies**:
-   - Bold key concepts, file paths, tool names, and primary metrics (`**like this**`).
-   - Use standardized emoji headers (`# 🧩`, `## ⚡`, `### 🛠️`) for visual anchor points.
+| Dimension | Points | What earns them |
+|---|---|---|
+| Orientation | 20 | An `# H1`; a plain sentence saying what this is within 15 lines; the first runnable command within 40 lines. |
+| Substance | 25 | A command block; real output; an install or usage heading; a licence; how to test and contribute. |
+| Restraint | 20 | Few or no `<br/>` tags, at most five badges, emoji under 8 per 100 lines, no self-awarded grade badges. |
+| Brevity | 15 | 200 lines or fewer. 350 is acceptable; past 600 it is a manual, not a README. |
+| Links | 20 | Every relative path exists and every anchor matches a header. Broken links are the only hard error. |
 
-4. **📊 Rich Data Displays & Comparative Matrices**:
-   - Replace long bullet lists with sleek Markdown tables.
-   - Include comparison tables (e.g., *Before vs After*, *Traditional vs Modern*, *Feature Matrix*).
+`--strict` exits 1 unless the file scores 80 or more with no broken link.
 
-5. **🖼️ Visual Architecture & Mermaid Diagrams**:
-   - Convert complex procedural logic or multi-step workflows into clean Mermaid flowcharts, sequence diagrams, or ASCII UI wireframe boxes.
+## Workflow
 
-6. **💡 GitHub-Flavored Markdown Alerts & Badges**:
-   - Use `> [!NOTE]`, `> [!TIP]`, `> [!IMPORTANT]`, `> [!WARNING]`, and `> [!CAUTION]` callout blocks.
-   - Standardize shields.io badges (`style=for-the-badge` or `style=flat-square`) for immediate credibility.
-
----
-
-## 🛠️ Procedural Execution Workflow
-
-```
-┌──────────────────────────────────────┐
-│  1. Diagnostic Audit (audit_readme)  │ ──> Scan current README for spacing, sections, links & score
-└──────────────────────────────────────┘
-                   │
-┌──────────────────────────────────────┐
-│  2. Structural Scaffolding & Layout  │ ──> Plan sections: Hero, 1-Liner, Why/What, Architecture,
-└──────────────────────────────────────┘     Features, Quickstart, Tooling, Docs, Governance, License
-                   │
-┌──────────────────────────────────────┐
-│  3. Visual Polish & Styling Inject   │ ──> Add <br/>, ---, bolding, badges, alerts, ASCII frames, Mermaid
-└──────────────────────────────────────┘
-                   │
-┌──────────────────────────────────────┐
-│  4. Verification & Link Integrity    │ ──> Run audit_readme.py --strict to verify 100/100 score
-└──────────────────────────────────────┘
-```
-
----
-
-### Step 1: Audit Existing Documentation
-
-Analyze the target `README.md` using the built-in diagnostic CLI:
+### 1. Audit before touching anything
 
 ```bash
 python skills/custom/readme-designer/scripts/audit_readme.py --target README.md
 ```
 
-The diagnostic script evaluates:
-- **Hero & Badge Score**: Centered title, tagline, shields.io badges, and quick navigation bar.
-- **Visual Spacing Density**: Presence of `<br/>` spacing tags and `---` dividers.
-- **Section Completeness**: Hero, 1-Liner Quick Install, What is X / Architecture, Comparison / Core Pillars, Quickstart, Features / Catalog, Developer Tooling, Governance, License.
-- **Link & Anchor Integrity**: Verifies all relative file links and internal section anchor links (`#section-id`).
+Read `first_command_line` and `line_count` first. They usually explain the
+score on their own.
 
----
+### 2. Cut before you write
 
-### Step 2: Modernize & Apply Design System
+Most bad READMEs are not badly written, they are too long. In order:
 
-Refactor the `README.md` content following this standardized structure:
+1. **Move reference material to `docs/`** and link it. Repository trees,
+   full CLI catalogues, specification tables, architecture essays.
+2. **Delete every `<br/>`.** Markdown already separates blocks. The tags are
+   layout by padding and cost the reader scrolling.
+3. **Delete decorative badges.** Keep the ones a reader acts on: build
+   status, licence, version. A badge the project awards itself -- a grade, a
+   score, "production ready" -- reads as evidence and is not; the auditor
+   warns about these by name.
+4. **Delete the emoji that mark nothing.** When every heading has one, none
+   of them is a signal.
+5. **Delete diagrams that restate the text.** A diagram earns its place by
+   showing something prose cannot: a real flow, a real shape.
 
-#### 1. Hero Header (Centered)
+If the archived original is worth keeping, keep it -- `docs/archive/` with a
+note at the top, links rewritten for the new location.
+
+### 3. Structure what remains
+
 ```markdown
-<div align="center">
+# Project Name
 
-# 🧩 [Project Name]
+One or two sentences: what this is, who it is for. No tagline in italics.
 
-### *[Inspiring, punchy, bold tagline]*
+## The thing to try first
 
-<br/>
+The single command, then its real output in a ```text block.
 
-[![Badge 1](https://img.shields.io/badge/...)](...)
-[![Badge 2](https://img.shields.io/badge/...)](...)
+## Install / Usage
 
-<br/>
+The other commands, with what they print.
 
-[**⚡ Quickstart**](#-quickstart) &nbsp;•&nbsp; [**📖 Documentation**](./docs/) &nbsp;•&nbsp; [**🚀 Features**](#-features) &nbsp;•&nbsp; [**📄 License**](./LICENSE)
+## How it works
 
-<br/>
+Two or three paragraphs. Longer goes to docs/ with a link.
 
-</div>
+## Contributing
 
----
+How to run the tests and send a change.
 
-<br/>
+## License
 ```
 
-#### 2. Instant 1-Liner Install / Copy Block
-```markdown
-### ⚡ Instant Install (1-Liner)
+Order by what a reader needs, not by what the project is proud of. If the
+project has one thing worth trying, put a real run of it -- real command,
+real output -- above everything else.
 
-Install or run directly in **one command**:
+### 4. Write honestly
 
-<br/>
+- **Claims match evidence.** "Checks passing" with a CI badge, not "Grade A"
+  from your own tool. If a number is not measured, do not print it.
+- **Say what is unfinished.** One line of "work in progress, here is what is
+  and is not verified" buys more trust than any badge.
+- **Cut adjectives.** "Ultra-modern, world-class, blazing-fast" is noise a
+  reader discounts. The command and its output are the argument.
 
-```bash
-npx your-package-name
-```
-
-<br/>
-
----
-
-<br/>
-```
-
-#### 3. Why / What Problem It Solves & Architecture
-```markdown
-## 💡 What is [Project Name]?
-
-[Problem description highlighting industry friction points with ❌ and solutions with ✨]
-
-<br/>
-
-> [!IMPORTANT]
-> **Core Architectural Philosophy**  
-> [Brief explanation of key breakthrough or design principle]
-
-<br/>
-
-```mermaid
-flowchart TD
-    A["🚀 1. Input"] --> B["⚡ 2. Processing"]
-    B --> C["🎉 3. Output"]
-```
-
-<br/>
-
----
-
-<br/>
-```
-
-#### 4. Feature Comparison or Core Pillars Table
-```markdown
-## ⚖️ Architectural Comparison / 🎯 Core Pillars
-
-| Dimension | ❌ Traditional Approach | 🌟 [Project Name] Solution |
-|---|---|---|
-| **Performance** | Slow / Bloated | **Ultra-fast & lightweight** |
-| **Reliability** | Untested static text | **Attested & evaluated in CI** |
-
-<br/>
-
----
-
-<br/>
-```
-
-#### 5. Quickstart with Syntax-Highlighted Examples & Expected Output
-```markdown
-## ⚡ Quickstart & Usage
-
-### 1. Execute Command
-
-<br/>
-
-```bash
-python run.py --target .
-```
-
-<br/>
-
-```text
-=================================================================
- [STATUS] Execution Complete: 100% Passed
-=================================================================
-```
-
-<br/>
-
----
-
-<br/>
-```
-
-#### 6. Developer Tooling / Diagnostics ASCII UI Mockup
-```markdown
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  🩺 DIAGNOSTIC SUITE: Health Score: 100 [GRADE A]                            │
-│  [✓] Configuration Valid             [✓] Integrity Check Passed             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-```
-
-#### 7. Repository Tree, Governance & License Footer
-```markdown
-## 📁 Repository Architecture
-
-<br/>
-
-```text
-project-root/
-├── docs/             # Documentation hub
-├── scripts/          # Automation CLI tools
-└── README.md         # Overview
-```
-
-<br/>
-
----
-
-<br/>
-
-## 📜 Open-Source Governance & Citations
-
-- 🛡️ **[Security Policy](./SECURITY.md)**: Vulnerability disclosure.
-- 👥 **[Collaborator Guidelines](./COLLABORATORS.md)**: Contribution rules.
-- 📄 **[License](./LICENSE)**: Apache 2.0 / MIT.
-
-<br/>
-
-<div align="center">
-
-**Built with ❤️ for the Developer Community**
-
-</div>
-```
-
----
-
-### Step 3: Scaffold from Scratch (Optional)
-
-If starting a brand-new repository with no existing README, use the scaffolding script:
-
-```bash
-python skills/custom/readme-designer/scripts/scaffold_readme.py \
-  --name "Project Name" \
-  --tagline "The Ultimate AI Toolchain" \
-  --output README.md
-```
-
----
-
-### Step 4: Validate Readme Quality & Strict Link Checking
-
-Run the validation suite to ensure a perfect **100/100 A+** design score and zero broken links:
+### 5. Re-audit until it passes
 
 ```bash
 python skills/custom/readme-designer/scripts/audit_readme.py --target README.md --strict
 ```
+
+Fix broken links first -- they are the only defect here that is unambiguously
+wrong. Then read the top recommendations; each names the reader cost.
+
+## Starting from nothing
+
+```bash
+python skills/custom/readme-designer/scripts/scaffold_readme.py \
+  --name "Project Name" --tagline "A tool that does one thing well" \
+  --output README.md
+```
+
+The template is deliberately short and scores 100 on the rubric above. It is
+meant to be edited **down**, not up: a template that ships placeholders for a
+banner, a badge wall and a diagram gets them filled in rather than deleted.
+
+## What this skill will not do
+
+- It will not add decoration to raise a score. If a change would not help a
+  reader, it does not belong in the file.
+- It will not invent metrics, grades or endorsements to fill a badge row.
+- It will not delete content it cannot see a home for. Long material moves to
+  `docs/` and gets linked; it is not silently dropped.
+
+## Auditing other Markdown
+
+The rubric assumes a README. Pointed at a guide or a specification, the
+brevity and orientation checks are the wrong shape -- a specification is
+supposed to be long. Use the link-integrity result, which is universal, and
+read the rest as advice rather than as a grade.

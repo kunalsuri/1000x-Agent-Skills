@@ -1,0 +1,52 @@
+{
+  "record_schema_version": "1.1.0",
+  "tool": {
+    "name": "verify_skill_bundle.py",
+    "version": "1.1.0",
+    "ruleset_version": "2026.09.01"
+  },
+  "verified_at": "2026-08-01T00:00:00+00:00",
+  "bundle": {
+    "name": "tidy-imports",
+    "digest": "sha256:956a1a2b3e6df1bff4f0a981aced64b4e6d9814338375e0447bb425c85b1a701",
+    "file_count": 3,
+    "class_counts": {
+      "prose": 1,
+      "python": 1,
+      "text-data": 1
+    }
+  },
+  "observed_capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "declared_capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "comparison": null,
+  "network_destinations": [],
+  "findings": [
+    {
+      "check": "EXT-TOOL-GRANT",
+      "severity": "INFO",
+      "path": "SKILL.md",
+      "line": null,
+      "message": "The skill requests 1 tool(s): view_file. Installing it grants these for anything it decides to do.",
+      "owasp_ast": "AST03",
+      "fingerprint": "80920c2ef2f92b85"
+    }
+  ],
+  "counts": {
+    "CRITICAL": 0,
+    "HIGH": 0,
+    "WARN": 0,
+    "INFO": 1
+  },
+  "verdict": "no_known_findings",
+  "disclaimer": "This record lists patterns that were and were not found by a static scan. It is not a certification, a warranty, or a statement that the bundle is safe. Every published agent-skill scanner has been bypassed by researchers using ordinary obfuscation; assume this one can be too. Responsibility for installing the bundle remains with whoever installs it."
+}

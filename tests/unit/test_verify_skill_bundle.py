@@ -910,3 +910,173 @@ class TestSmuggledTextIsDecodedAndCollapsed:
 
     def test_decoder_returns_empty_for_ordinary_text(self, verifier):
         assert verifier.decode_tag_characters("plain text") == ""
+
+
+# ---------------------------------------------------------------------------
+# What the bundle installs but does not contain
+# ---------------------------------------------------------------------------
+
+class TestDependencySurface:
+    """
+    EXT-CAP-UNPROVEN marks where an import outran the analysis. This marks
+    where the install does: a package named in a manifest is downloaded, and
+    in several ecosystems runs its own code, before any file here is read.
+    """
+
+    def test_requirements_are_named(self, verifier, bundle):
+        root = bundle(files={"requirements.txt": "requests==2.32.3\nhttpx>=1\n"})
+        record = verifier.verify_bundle(root)
+        assert severity_of(record, "EXT-DEPENDENCY") == {"WARN"}
+        message = checks(record, "EXT-DEPENDENCY")[0]["message"]
+        assert "requests" in message and "httpx" in message
+
+    def test_a_comment_only_manifest_says_nothing(self, verifier, bundle):
+        root = bundle(files={"requirements.txt": "# nothing pinned yet\n"})
+        record = verifier.verify_bundle(root)
+        assert checks(record, "EXT-DEPENDENCY") == []
+
+    def test_package_json_dependencies_are_named(self, verifier, bundle):
+        root = bundle(files={
+            "package.json": json.dumps(
+                {"dependencies": {"left-pad": "^1"},
+                 "devDependencies": {"jest": "^29"}}),
+        })
+        record = verifier.verify_bundle(root)
+        message = checks(record, "EXT-DEPENDENCY")[0]["message"]
+        assert "left-pad" in message and "jest" in message
+
+    def test_pyproject_inline_and_table_dependencies_are_named(self, verifier):
+        names = verifier._dependency_names(
+            "pyproject.toml",
+            '[project]\nname = "x"\ndependencies = ["httpx>=1.0", "rich"]\n'
+            '[tool.poetry.dependencies]\npandas = "^2"\n')
+        assert set(names) == {"httpx", "rich", "pandas"}
+
+    def test_a_malformed_package_json_is_not_a_crash(self, verifier, bundle):
+        root = bundle(files={"package.json": "{ not json"})
+        record = verifier.verify_bundle(root)
+        assert checks(record, "EXT-DEPENDENCY") == []
+
+
+# ---------------------------------------------------------------------------
+# Re-verification: what changed, not merely that something did
+# ---------------------------------------------------------------------------
+
+class TestBaselineComparison:
+
+    def test_an_unchanged_bundle_matches_its_record(self, verifier, bundle):
+        root = bundle()
+        baseline = verifier.verify_bundle(root)
+        again = verifier.verify_bundle(root, baseline=baseline)
+        assert again["comparison"]["digest_changed"] is False
+        assert again["comparison"]["new_findings"] == []
+        assert "EXT-BASELINE-MATCH" in {f["check"] for f in again["findings"]}
+
+    def test_a_silent_update_is_reported_with_its_new_findings(
+            self, verifier, bundle, tmp_path):
+        root = bundle()
+        baseline = verifier.verify_bundle(root)
+        (root / "tests").mkdir()
+        (root / "tests" / "conftest.py").write_text(
+            "import socket\n", encoding="utf-8")
+        record = verifier.verify_bundle(root, baseline=baseline)
+        drift = checks(record, "EXT-BASELINE-DRIFT")
+        assert drift and drift[0]["severity"] == "CRITICAL"
+        assert "EXT-AUTORUN" in {f["check"]
+                                 for f in record["comparison"]["new_findings"]}
+
+    def test_a_cosmetic_change_drifts_without_escalating(self, verifier, bundle):
+        """Changed bytes with no new finding is worth saying, not shouting."""
+        root = bundle()
+        baseline = verifier.verify_bundle(root)
+        (root / "NOTES.md").write_text("Some notes.\n", encoding="utf-8")
+        record = verifier.verify_bundle(root, baseline=baseline)
+        assert severity_of(record, "EXT-BASELINE-DRIFT") == {"WARN"}
+
+    def test_identical_bytes_under_a_newer_ruleset_are_not_called_drift(
+            self, verifier, bundle):
+        root = bundle()
+        baseline = verifier.verify_bundle(root)
+        baseline["findings"] = []  # as an older ruleset would have recorded it
+        record = verifier.verify_bundle(root, baseline=baseline)
+        assert checks(record, "EXT-BASELINE-DRIFT") == []
+        assert severity_of(record, "EXT-RULESET-DRIFT") == {"WARN"}
+
+    def test_a_moved_line_is_not_a_new_finding(self, verifier, bundle):
+        """Fingerprints hash the triggering text, not where it sits."""
+        payload = "import socket\n"
+        root = bundle(files={"tests/conftest.py": payload})
+        baseline = verifier.verify_bundle(root)
+        (root / "tests" / "conftest.py").write_text(
+            "# a comment added above\n" + payload, encoding="utf-8")
+        record = verifier.verify_bundle(root, baseline=baseline)
+        assert record["comparison"]["new_findings"] == []
+
+    def test_a_json_file_that_is_not_a_record_is_a_tool_error(
+            self, verifier, tmp_path):
+        path = tmp_path / "notes.json"
+        path.write_text('{"hello": "world"}', encoding="utf-8")
+        with pytest.raises(verifier.ToolError):
+            verifier.compare_to_baseline([], "sha256:x", json.loads(
+                path.read_text(encoding="utf-8")))
+
+
+# ---------------------------------------------------------------------------
+# Verifying more than one bundle at a time
+# ---------------------------------------------------------------------------
+
+class TestCollectionScan:
+
+    def test_each_subdirectory_becomes_a_target(self, verifier, bundle, tmp_path):
+        parent = tmp_path / "installed"
+        parent.mkdir()
+        for name in ("alpha", "beta"):
+            (parent / name).mkdir()
+            (parent / name / "SKILL.md").write_text(
+                BENIGN_SKILL_MD, encoding="utf-8")
+        targets = verifier.resolve_targets([str(parent)], collection=True)
+        assert [t.name for t in targets] == ["alpha", "beta"]
+
+    def test_hidden_directories_are_skipped(self, verifier, tmp_path):
+        parent = tmp_path / "installed"
+        (parent / ".git").mkdir(parents=True)
+        (parent / "alpha").mkdir()
+        targets = verifier.resolve_targets([str(parent)], collection=True)
+        assert [t.name for t in targets] == ["alpha"]
+
+    def test_an_empty_collection_is_an_error_not_a_clean_result(
+            self, verifier, tmp_path):
+        parent = tmp_path / "empty"
+        parent.mkdir()
+        with pytest.raises(verifier.ToolError):
+            verifier.resolve_targets([str(parent)], collection=True)
+
+    def test_the_worst_verdict_decides_the_run(self, verifier, bundle):
+        clean = verifier.verify_bundle(bundle(name="clean"))
+        hostile = verifier.verify_bundle(bundle(
+            name="hostile",
+            files={"tests/conftest.py": "import urllib.request\n"
+                                        "urllib.request.urlopen('http://x.invalid')\n"}))
+        assert verifier.worst_verdict([clean, hostile]) == \
+            verifier.VERDICT_DO_NOT_INSTALL
+
+    def test_two_targets_exit_on_the_worse_one(self, verifier, bundle, capsys):
+        clean = bundle(name="clean")
+        hostile = bundle(name="hostile", files={
+            "tests/conftest.py": "import urllib.request\n"
+                                 "urllib.request.urlopen('http://x.invalid')\n"})
+        assert verifier.main([str(clean), str(hostile)]) == 2
+        assert "[SUMMARY] 2 bundle(s)" in capsys.readouterr().out
+
+    def test_one_target_keeps_the_original_record_shape(
+            self, verifier, bundle, capsys):
+        """Receipts written by v1.0.0 stay comparable with ones written now."""
+        assert verifier.main([str(bundle()), "--json"]) == 0
+        record = json.loads(capsys.readouterr().out)
+        assert "bundles" not in record and record["bundle"]["name"] == "sample-skill"
+
+    def test_pinning_a_digest_across_several_targets_is_refused(
+            self, verifier, bundle, capsys):
+        first, second = bundle(name="one"), bundle(name="two")
+        assert verifier.main([str(first), str(second),
+                              "--expect-digest", "sha256:whatever"]) == 3

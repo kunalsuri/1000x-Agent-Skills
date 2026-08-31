@@ -1,0 +1,12 @@
+{
+  "skill_name": "note-taker",
+  "version": "1.0.0",
+  "attestation_status": "DRAFT",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "capabilities_rationale": "Reads the one file named on the command line and prints Markdown."
+}

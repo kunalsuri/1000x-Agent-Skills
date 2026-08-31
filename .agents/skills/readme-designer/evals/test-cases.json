@@ -27,6 +27,16 @@
         "id": "pos-05",
         "prompt": "Audit this README for broken anchor links, missing sections, and formatting quality.",
         "expected_trigger": true
+      },
+      {
+        "id": "pos-06",
+        "prompt": "Our README is 800 lines and nobody reads past the badges. Cut it down to what a new user actually needs.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-07",
+        "prompt": "Shorten the README and move the reference material into docs/, keeping every link working.",
+        "expected_trigger": true
       }
     ],
     "negative_prompts": [
@@ -46,5 +56,6 @@
         "expected_trigger": false
       }
     ]
-  }
+  },
+  "description": "Trigger evaluation for the README designer. Positive prompts cover both directions users ask from: making a README look better, and making it shorter and clearer. Both load this skill; the skill's own guidance decides what a good answer is. Negative prompts are ordinary engineering work that must not pull a documentation skill in."
 }

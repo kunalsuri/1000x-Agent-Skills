@@ -1,8 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
   "skill_name": "readme-designer",
-  "version": "1.0.0",
-  "attestation_status": "VERIFIED",
+  "version": "2.0.0",
+  "attestation_status": "DRAFT",
   "capabilities": {
     "network": "none",
     "process_execution": "none",
@@ -11,21 +11,21 @@
   },
   "capabilities_rationale": "audit_readme.py is read-only; scaffold_readme.py writes a README into the target repository. Link checking is filesystem-only -- no URL is ever fetched.",
   "attested_by": "Kunal Suri",
-  "attestation_date": "2026-08-29",
+  "attestation_date": "2026-08-31",
   "tested_platforms": [
     {
       "platform": "Claude Code",
       "model": "claude-3-7-sonnet",
-      "status": "PASS",
-      "notes": "Verified aesthetic refactoring, vertical <br/> breathing room injection, comparative matrix generation, and strict link resolution.",
-      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
+      "status": "NOT_RUN",
+      "notes": "Version 1.0.0 was evaluated on this platform and passed; that run exercised the ornament-scoring rubric (vertical <br/> injection, hero and badge generation) which version 2.0.0 removed. The old result is not evidence about the current skill, so it is recorded as NOT_RUN rather than carried forward as a PASS.",
+      "currency_caveat": "Not re-run since the 2.0.0 rewrite of the rubric, the scaffolder and SKILL.md. Status returns to TESTED only when a run against the current version is recorded."
     },
     {
       "platform": "Google Antigravity",
       "model": "gemini-3.7-flash",
-      "status": "PASS",
-      "notes": "Verified full markdown diagnostic auditing (audit_readme.py) scoring 100/100 Grade A+ and automated template scaffolding.",
-      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
+      "status": "NOT_RUN",
+      "notes": "Version 1.0.0 was evaluated on this platform and passed; that run exercised the ornament-scoring rubric (vertical <br/> injection, hero and badge generation) which version 2.0.0 removed. The old result is not evidence about the current skill, so it is recorded as NOT_RUN rather than carried forward as a PASS.",
+      "currency_caveat": "Not re-run since the 2.0.0 rewrite of the rubric, the scaffolder and SKILL.md. Status returns to TESTED only when a run against the current version is recorded."
     }
   ],
   "performance_summary": {
@@ -47,5 +47,5 @@
     "enforcement": "Unlike the tested_platforms rows above, this is not a point-in-time claim: it re-runs on every push and pull request, and the content digest below means the attestation stops matching if any file here is edited without re-attesting.",
     "reproduce": "python scripts/audit_skill_safety.py --skill readme-designer --strict"
   },
-  "content_digest": "sha256:e71bd85f50fe7d523dd267d9a8b6636ca87182e9992eeafd7428aed3f10f01c4"
+  "content_digest": "sha256:49e7f3bb703533509e76bf1f4100ff7d3e326790fa03e93177ff0fb384ad4b1a"
 }
