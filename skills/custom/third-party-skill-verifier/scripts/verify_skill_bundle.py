@@ -273,7 +273,7 @@ URL_RE = re.compile(r"\bhttps?://([A-Za-z0-9._~%-]+(?::\d+)?)(?:/[^\s\"'`<>)\]]*
 
 PROSE_SUFFIXES = {".md", ".markdown", ".mdx", ".txt", ".rst", ".adoc", ".org"}
 PYTHON_SUFFIXES = {".py", ".pyw"}
-BYTECODE_SUFFIXES = {".pyc", ".pyo", ".pyd"}
+BYTECODE_SUFFIXES = {".pyc", ".pyo"}
 SHELL_SUFFIXES = {
     ".sh", ".bash", ".zsh", ".fish", ".ksh", ".command", ".bat", ".cmd",
     ".ps1", ".psm1", ".psd1", ".vbs", ".wsf",
@@ -286,7 +286,7 @@ OTHER_CODE_SUFFIXES = {
 }
 NATIVE_SUFFIXES = {
     ".so", ".dylib", ".dll", ".exe", ".bin", ".o", ".a", ".wasm", ".msi",
-    ".app", ".sys", ".ko", ".elf",
+    ".app", ".sys", ".ko", ".elf", ".pyd",
 }
 ARCHIVE_SUFFIXES = {
     ".zip", ".tar", ".gz", ".tgz", ".bz2", ".tbz", ".xz", ".txz", ".7z",
@@ -570,6 +570,9 @@ def enumerate_bundle(root: Path) -> Tuple[List[BundleFile], List[Dict[str, Any]]
             rel = _rel(root, entry_path)
 
             if entry.is_symlink():
+                if len(files) >= MAX_FILES:
+                    truncated = True
+                    continue
                 escapes, raw = _link_escapes(root, entry_path)
                 item = BundleFile(entry_path, rel)
                 item.is_symlink = True
@@ -599,6 +602,9 @@ def enumerate_bundle(root: Path) -> Tuple[List[BundleFile], List[Dict[str, Any]]
                 continue
 
             if not entry.is_file(follow_symlinks=False):
+                if len(files) >= MAX_FILES:
+                    truncated = True
+                    continue
                 item = BundleFile(entry_path, rel)
                 item.klass = "special"
                 files.append(item)

@@ -38,7 +38,7 @@ This tool reads the whole bundle and reports three things:
 
 ## What it will not do
 
-It will never tell you a skill is safe, and it does not contain the word.
+It will never tell you a skill is safe.
 A clean result means *none of the patterns it looks for were present*.
 
 Every published skill scanner has been bypassed by researchers using
