@@ -13,6 +13,14 @@ digest, a grade, or a capability declaration.
 |---|---|---|
 | `skill-creator/` | [`anthropics/skills`](https://github.com/anthropics/skills/tree/main/skills/skill-creator) | Apache-2.0 |
 
+This copy exists so Claude Code loads the skill for sessions in this repository --
+project skills are read from `.claude/skills/` and nowhere else. The catalogue entry
+at [`skills/anthropic/skill-creator/`](../../skills/anthropic/skill-creator/) is the
+documented one, and it additionally carries `attestation.json` and `evals/`.
+`tests/unit/test_vendored_skill_parity.py` fails the build if the two copies drift,
+and asserts that this one carries no `attestation.json`: nothing under `.claude/` is
+digest-checked, so an attestation here would be a claim no CI run could enforce.
+
 ### `skill-creator`
 
 Anthropic's authoring skill: it interviews you about the skill you want, drafts

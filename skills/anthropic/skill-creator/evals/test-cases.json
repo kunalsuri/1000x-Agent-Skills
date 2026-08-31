@@ -1,0 +1,53 @@
+{
+  "skill_name": "skill-creator",
+  "description": "Trigger evaluation for the vendored Anthropic skill-creator. Positive prompts describe authoring, evaluating or tuning a skill; negative prompts describe adjacent work that must NOT pull it in -- checking a stranger's skill is third-party-skill-verifier's job, wiring a repository for several agents is multi-agent-docs', and ordinary coding is neither. These prompts were written in this repository to describe the skill's intended trigger surface. They have not been executed as a measurement; attestation.json records the skill as NOT_RUN.",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "I want to build a skill that reviews Terraform plans before apply. Can you help me write it?",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "My skill never fires when I expect it to. Can you fix its description so it triggers properly?",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Run some evals on this SKILL.md and tell me whether it actually beats not having it.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-04",
+        "prompt": "Benchmark this skill across a few test prompts and show me the variance between runs.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-05",
+        "prompt": "Here is a rough draft of a skill I wrote. Improve it and package it so I can install it.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "I downloaded a skill from GitHub. Check it for anything malicious before I install it.",
+        "expected_trigger": false,
+        "rationale": "Static verification of an untrusted bundle is skills/custom/third-party-skill-verifier, which never executes what it reads. skill-creator runs agents."
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Set this repository up so Claude Code, Cursor and Codex all read the same instructions.",
+        "expected_trigger": false,
+        "rationale": "Cross-agent instruction scaffolding is skills/custom/multi-agent-docs. No skill is being authored."
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Write me a Python function that parses YAML frontmatter out of a markdown file.",
+        "expected_trigger": false,
+        "rationale": "Ordinary coding. Touching frontmatter is not the same as authoring a skill."
+      }
+    ]
+  }
+}

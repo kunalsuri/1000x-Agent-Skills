@@ -38,11 +38,22 @@ class TestTargetResolution:
 
 class TestDiscovery:
     def test_only_canonical_skills_are_installable(self, installer, repo_root):
-        """The .agents/ mirror is a copy; installing from it would double-install."""
+        """The .agents/ mirror is a copy; installing from it would double-install.
+
+        This asserted "skills/custom" in the path until skills/anthropic/ was
+        populated with vendored upstream skills. That was never the invariant --
+        discover_installable rglobs all of skills/ and always did -- it was just
+        incidentally true while custom was the only category with anything in it.
+        The invariant is that a source lives under skills/<category>/<skill> and
+        never under the mirror, so that is what is checked here.
+        """
         found = installer.discover_installable(repo_root)
         assert found
-        assert all("skills/custom" in p.as_posix() for p in found)
         assert not any(".agents" in p.parts for p in found)
+        for skill_dir in found:
+            relative = skill_dir.relative_to(repo_root)
+            assert relative.parts[0] == "skills", f"{relative} is outside skills/"
+            assert len(relative.parts) == 3, f"{relative} is not skills/<category>/<skill>"
 
     def test_every_discovered_directory_is_a_skill(self, installer, repo_root):
         assert all((p / "SKILL.md").exists() for p in installer.discover_installable(repo_root))

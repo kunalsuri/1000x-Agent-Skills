@@ -56,6 +56,30 @@
       "reason": "Deliberate over-declaration. The AST can prove this script deletes and writes directories, but not that the paths resolve under the user's HOME rather than the workspace. 'unrestricted' is the truthful label for a tool that replaces directories in ~/.claude/skills; tightening it to 'workspace-delete' would understate the real blast radius."
     },
     {
+      "path": "skills/anthropic/mcp-builder",
+      "check": "CAP-OVERDECLARED",
+      "fingerprint": "b3a52c72f0d195e2",
+      "reason": "Deliberate over-declaration on a vendored skill. The auditor derives this capability as 'none' because it is exercised through a third-party SDK rather than a module in its import table: scripts/evaluation.py imports the `anthropic` client and calls the Claude API, and scripts/connections.py calls stdio_client(StdioServerParameters(command=...)), which launches an arbitrary command as a child process. The declaration in attestation.json states what the code does; the auditor states what it can prove from imports alone. Where those differ on vendored code, the stronger and true value is declared and pinned here rather than silently narrowed to whatever turns the build green."
+    },
+    {
+      "path": "skills/anthropic/mcp-builder",
+      "check": "CAP-OVERDECLARED",
+      "fingerprint": "bac97b9487ea59c7",
+      "reason": "Second of the two deliberate over-declarations on this vendored skill; see the entry above for the full reasoning. Both are recorded separately so that if either capability later becomes derivable -- because the auditor's tables grow, or because the vendored code stops using the SDK -- that one exemption stops applying on its own and resurfaces for review."
+    },
+    {
+      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "1c530155fd97159b",
+      "reason": "Reviewed 2026-08-31: four identical `base64.b64encode(raw).decode(\"ascii\")` call sites (lines 167, 179, 190, 202), which share one fingerprint because the line text is identical. Each reads a local image, PDF or spreadsheet produced by an eval run and encodes it into a data: URI so the generated review page is a single self-contained HTML file. Encoding local output for display is the opposite of the pattern this check exists to catch; there is no b64decode anywhere in the bundle."
+    },
+    {
+      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "c57bdd786c5db31c",
+      "reason": "Reviewed 2026-08-31: the `import base64` line in vendored upstream code. The module is used only to ENCODE local files, never to decode a payload -- see the entry below for the four call sites. Flagged because the check matches the import itself, which is correct behaviour for a check pointed at strangers' code."
+    },
+    {
       "path": "skills/custom/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "13a3748e396f23fa",

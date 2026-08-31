@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "mcp-builder",
+  "version": "1.0.0",
+  "attestation_status": "DRAFT",
+  "capabilities": {
+    "network": "outbound",
+    "process_execution": "subprocess",
+    "dynamic_code_execution": "none",
+    "filesystem": "workspace-write"
+  },
+  "capabilities_rationale": "Two of these are deliberately stronger than scripts/audit_skill_safety.py derives, and the gap is the interesting part. The auditor reports network=none and process_execution=none for this bundle because both capabilities are exercised through third-party SDKs whose names are not in its import tables: scripts/evaluation.py imports the `anthropic` client and calls the Claude API, and scripts/connections.py imports `mcp` and calls stdio_client(StdioServerParameters(command=..., args=..., env=...)), which launches an arbitrary command as a child process. An AST that matches on module names cannot see a capability that lives behind a dependency. Declaring the auditor's weaker answer would have passed CI and been false, so the stronger and true values are declared here and the resulting CAP-OVERDECLARED warnings are pinned in docs/safety-allowlist.json with this reasoning. FILESYSTEM 'workspace-write': the evaluation harness writes report files beside its inputs.",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-08-31",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "not-recorded",
+      "status": "NOT_RUN",
+      "notes": "Vendored for display in this catalogue. No trigger suite has been run against evals/test-cases.json on any platform, and no MCP server has been built end-to-end with it here. The prompts in evals/ describe the skill's intended trigger surface; they have never been executed as a measurement.",
+      "currency_caveat": "Recorded as NOT_RUN deliberately rather than left absent. attestation_status is DRAFT for the same reason: this repository has read this skill and derived its capabilities, and has not evaluated it."
+    }
+  ],
+  "provenance": {
+    "source_type": "vendored",
+    "origin_url": "https://github.com/anthropics/skills/tree/main/skills/mcp-builder",
+    "license": "Apache-2.0",
+    "upstream_commit": "3b3fad96af16a10759d930941b4520ba0c40edae"
+  },
+  "security_audit": {
+    "tool": "skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py",
+    "method": "This repository's own third-party verifier was run over the bundle as an untrusted stranger's skill. Verdict: NO KNOWN FINDINGS -- 0 critical, 0 high, 0 warn, 5 info, over 10 files (7 prose, 2 python, 1 text-data). Note that the verifier derived network=outbound here where the auditor derived none: its module table includes asyncio, which scripts/evaluation.py imports. The two tools disagreeing on the same file is not a defect in either -- the verifier is deliberately the broader of the two because it is pointed at strangers' code -- but it is why the declaration above was checked against the source by hand rather than copied from either tool.",
+    "last_run_date": "2026-08-31",
+    "last_run_result": "PASS",
+    "reproduce": "python skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py skills/anthropic/mcp-builder",
+    "scope_caveat": "A static scan of vendored code, and static scans do not follow calls into dependencies. scripts/requirements.txt pulls `mcp` and `anthropic` from PyPI; nothing here has audited those packages, and running this skill's evaluation harness runs them."
+  },
+  "content_digest": "sha256:dfe25549394867c11c7e9678f5d77623b4b376d50a44708646d525e426bf77c2"
+}
