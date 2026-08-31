@@ -22,6 +22,16 @@
 
 ---
 
+<div align="center">
+
+**⚡⚡NOTE: Work in Progress (WIP)**
+
+Limited human-in-the-loop verification is currently applied. Output stability is expected to improve after the first pre-release.
+
+</div>
+
+---
+
 <br/>
 
 ### ⚡ Instant Install (1-Liner)
@@ -668,7 +678,7 @@ sequenceDiagram
 @software{suri2025_1000x_agent_skills,
   author       = {Kunal Suri},
   title        = {1000x-Agent-Skills: The Capability-Declared, Attested & Evaluated Skills Suite for Autonomous AI Coding Agents},
-  year         = {2025},
+  year         = {2026},
   publisher    = {GitHub},
   url          = {https://github.com/kunalsuri/1000x-Agent-Skills}
 }
