@@ -81,7 +81,7 @@ python scripts/install_to_agent.py --target claude --all --apply  # write
 | [`multi-agent-docs`](./skills/custom/multi-agent-docs/SKILL.md) | Scaffolds and keeps `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.agents/` in sync. | A repo has to work in several coding agents at once. |
 | [`preflight-test-engineer`](./skills/custom/preflight-test-engineer/SKILL.md) | Analyses a codebase, scaffolds `/tests/`, runs a four-stage pre-flight. | You want tests before you run the thing. |
 | [`public-repo-release-review`](./skills/custom/public-repo-release-review/SKILL.md) | Secret scan and governance audit before a repository goes public. | You are about to publish a repo. |
-| [`readme-designer`](./skills/custom/readme-designer/SKILL.md) | Audits and rebuilds README structure, spacing and link integrity. | Documentation needs a rewrite, not a patch. |
+| [`readme-designer`](./skills/custom/readme-designer/SKILL.md) | Scores a README on orientation, substance, restraint, brevity and link integrity — then cuts it down to those. | A README has grown into a manual nobody finishes. |
 | [`saas-app-builder`](./skills/custom/saas-app-builder/SKILL.md) | Scaffolds a full-stack SaaS monorepo with its test harnesses. | You are starting a web app from nothing. |
 
 **Vendored, not written here** — upstream Anthropic skills, copied in unmodified

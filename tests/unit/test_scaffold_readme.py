@@ -49,4 +49,14 @@ class TestGeneratedReadmeSatisfiesTheAuditor:
         path.write_text(generator.generate_readme_content(
             "Demo", "Tagline", "Description.", "Author", "Apache 2.0"), encoding="utf-8")
         result = audit.audit_markdown_file(path, tmp_path)
-        assert result["score"] >= 60, f"generator output scored {result['score']}"
+        assert result["passed"], (result["score"], result["recommendations"])
+
+    def test_the_template_ships_none_of_the_ornament_the_rubric_penalises(
+            self, readme):
+        """
+        A template is edited down, not up. Shipping a badge wall, padding tags
+        or a self-awarded grade badge means they get filled in and kept.
+        """
+        assert "<br/>" not in readme
+        assert "shields.io" not in readme
+        assert "align=\"center\"" not in readme
