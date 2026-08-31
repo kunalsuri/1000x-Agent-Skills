@@ -192,6 +192,53 @@ class TestRepositoryState:
         assert not failed, "\n".join(failed)
 
 
+class TestReadmeCatalogParity:
+    """audit_readme_parity must fail in BOTH directions: a README link to a
+    skill that does not exist, and a skill on disk the README never mentions.
+    The second direction is the one that historically let the catalog drift
+    under a green build."""
+
+    @staticmethod
+    def _build(tmp_path, listed, on_disk):
+        skills_root = tmp_path / "skills"
+        for cat, name in on_disk:
+            skill_dir = skills_root / cat / name
+            skill_dir.mkdir(parents=True)
+            (skill_dir / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+        readme = tmp_path / "README.md"
+        readme.write_text(
+            "\n".join(f"[`{n}`](./skills/{c}/{n}/SKILL.md)" for c, n in listed),
+            encoding="utf-8",
+        )
+        return readme, skills_root
+
+    def test_phantom_readme_reference_is_an_error(self, validator, tmp_path):
+        readme, skills_root = self._build(tmp_path, listed=[("custom", "ghost")], on_disk=[])
+        errors = validator.audit_readme_parity(readme, skills_root)
+        assert len(errors) == 1 and "non-existent skill 'ghost'" in errors[0]
+
+    def test_unlisted_disk_skill_is_an_error(self, validator, tmp_path):
+        readme, skills_root = self._build(tmp_path, listed=[], on_disk=[("custom", "hidden")])
+        errors = validator.audit_readme_parity(readme, skills_root)
+        assert len(errors) == 1 and "custom/hidden" in errors[0]
+        assert "never referenced" in errors[0]
+
+    def test_matching_catalog_passes(self, validator, tmp_path):
+        pair = [("custom", "alpha"), ("custom", "beta")]
+        readme, skills_root = self._build(tmp_path, listed=pair, on_disk=pair)
+        assert validator.audit_readme_parity(readme, skills_root) == []
+
+    def test_missing_readme_reports_disk_skills_as_unlisted(self, validator, tmp_path):
+        readme, skills_root = self._build(tmp_path, listed=[], on_disk=[("custom", "alpha")])
+        readme.unlink()
+        errors = validator.audit_readme_parity(readme, skills_root)
+        assert len(errors) == 1 and "custom/alpha" in errors[0]
+
+    def test_shipped_readme_lists_every_shipped_skill(self, validator, repo_root):
+        errors = validator.audit_readme_parity(repo_root / "README.md", repo_root / "skills")
+        assert errors == [], "\n".join(errors)
+
+
 def result_has(validator, skill, needle):
     result = validator.validate_skill(skill)
     return needle in errors_of(result) or needle in warnings_of(result)

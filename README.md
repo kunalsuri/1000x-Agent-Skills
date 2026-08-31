@@ -106,7 +106,7 @@ flowchart TD
 | **Trigger Evaluation** | Blind activation / high false triggers | **Positive and negative prompt datasets** (`evals/test-cases.json`), present and schema-checked for every skill. Automated scoring against a live model is not yet wired up — see [Enforced vs. recorded](#-enforced-vs-recorded) |
 | **Multi-Agent Parity** | Fragmented per IDE / out-of-sync instructions | **Synchronized across Claude Code, Antigravity, Cursor & Codex** |
 | **Deterministic Tooling** | Unassisted LLM hallucinations | **Integrated Python CLI engines + semantic LLM verification** |
-| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a 294-test pytest suite, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
+| **Quality Control** | Manual inspection | **Interactive `Skill-Doctor.html`, a pytest suite with 400+ tests, and a CI safety audit that blocks undeclared capabilities and hidden instructions** |
 
 <br/>
 
@@ -293,7 +293,7 @@ Every skill in this repository is governed by three non-negotiable engineering c
 | Pillar | File / Artifact | What Is Checked & Technical Specification |
 |---|---|---|
 | **1. 📋 Declared** | [`SKILL.md`](./skills/custom/multi-agent-docs/SKILL.md) | **Strict YAML frontmatter interface** (`name`, `version`, `description`, `allowed-tools`, `compatibility`, `tags`). Concise body limit ($\le 500$ lines) containing actionable procedural instructions. |
-| **2. 🛡️ Attested** | [`attestation.json`](./docs/ATTESTATION-SPEC.md) | Two things, kept distinct. **Enforced:** a `capabilities` declaration checked against the code by AST analysis, plus a `content_digest` that breaks if any file changes after attestation. **Recorded:** run reports on **Claude 3.7 Sonnet**, **Gemini 3.7 Flash** and **GPT-4o**, each carrying its own currency caveat. |
+| **2. 🛡️ Attested** | [`attestation.json`](./docs/ATTESTATION-SPEC.md) | Two things, kept distinct. **Enforced:** a `capabilities` declaration checked against the code by AST analysis, plus a `content_digest` that breaks if any file changes after attestation. **Recorded:** per-model run reports (Claude, Gemini and GPT backends — see each skill's `attestation.json` for the exact models), each carrying its own currency caveat. |
 | **3. 🧪 Evaluated** | [`evals/test-cases.json`](./docs/EVALUATION-FRAMEWORK.md) | **Positive and negative trigger datasets** for every skill, validated for structure and minimum size on every CI run. Precision $\ge 85\%$ and recall $\ge 90\%$ are the **design targets** these datasets exist to measure; scoring them against a live model is not yet automated, so no measured figure is claimed. |
 
 <br/>
@@ -337,6 +337,7 @@ Skills are curated into **Custom** (cross-platform, multi-agent workflows), **An
 | [**`preflight-test-engineer`**](./skills/custom/preflight-test-engineer/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Codebase AST & stack analyzer (`analyze_codebase.py`)<br/>• Deterministic `/tests/` test suite generator (`scaffold_tests.py`)<br/>• 4-stage pre-flight runner (`run_preflight.py`) | **Use when** asked to test a codebase before running, scaffold a test suite into `/tests/`, verify test coverage, or execute pre-flight sanity checks. |
 | [**`public-repo-release-review`**](./skills/custom/public-repo-release-review/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Pre-flight public release audit engine (`audit_repo.py`)<br/>• Deep secret leak scanner & governance verification<br/>• Scaffolding for `SECURITY.md`, `COLLABORATORS.md`, `CITATION.cff` | **Use when** reviewing a codebase before public release, auditing repository security and governance, or preparing for public launch. |
 | [**`readme-designer`**](./skills/custom/readme-designer/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Markdown visual design, spacing (`<br/>`) & structure<br/>• Automated diagnostic quality auditor (`audit_readme.py`)<br/>• Scaffolding engine for modern READMEs (`scaffold_readme.py`) | **Use when** creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, documentation, or landing page. |
+| [**`saas-app-builder`**](./skills/custom/saas-app-builder/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Full-stack SaaS scaffolding engine (`scaffold_saas.py`)<br/>• React 19, Tailwind CSS v4, shadcn/ui, single-port Express (3031)<br/>• Integrated 4-harness test suite & scaffold auditor (`audit_scaffold.py`) | **Use when** asked to create a SaaS app, scaffold a full-stack monorepo, or build a modern web application with integrated tests. |
 | [**`third-party-skill-verifier`**](./skills/custom/third-party-skill-verifier/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Static verification of skills written by **other people** (`verify_skill_bundle.py`)<br/>• Reads **every file in the bundle**, including the ones `SKILL.md` never mentions<br/>• Grades auto-executing files, shipped bytecode, hidden Unicode, and capability dishonesty<br/>• Findings carry **OWASP Agentic Skills Top 10** identifiers<br/>• Never fetches, never writes, never executes | **Use when** you have downloaded, cloned, or been sent a skill and need to know what it can do before installing it, or when re-checking an installed skill after an update. |
 
 <br/>
@@ -457,14 +458,15 @@ python scripts/validate_skills.py
         | capabilities: network=none,process_execution=none,
           dynamic_code_execution=none,filesystem=workspace-write
         | content_digest: sha256:440e88cf64b3... | eval_prompts_count: 3 pos / 2 neg
-[PASS] [custom/preflight-test-engineer]   -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/preflight-test-engineer] -> Health Score: 100/100 [Grade A+]
 [PASS] [custom/public-repo-release-review] -> Health Score: 100/100 [Grade A+]
-[PASS] [custom/readme-designer]           -> Health Score: 100/100 [Grade A+]
-[PASS] [custom/saas-app-builder]          -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/readme-designer] -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/saas-app-builder] -> Health Score: 100/100 [Grade A+]
+[PASS] [custom/third-party-skill-verifier] -> Health Score: 100/100 [Grade A+]
 ------------------------------------------------------------------------
- [README AUDIT] ✅ README.md catalog matches physical filesystem 1:1.
+ [README AUDIT] ✅ README.md catalog and skills/ tree match in both directions.
 ========================================================================
- Summary: 5 skills scanned | 5 Passed | 0 Warnings | 0 Failed
+ Summary: 6 skills scanned | 6 Passed | 0 Warnings | 0 Failed
 ========================================================================
 ```
 
@@ -560,12 +562,13 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py --name "My Proje
 │   │   ├── public-repo-release-review/ # Pre-flight public release review & audit
 │   │   ├── readme-designer/      # README & documentation visual design skill
 │   │   ├── saas-app-builder/     # Full-stack SaaS application scaffolder
+│   │   ├── third-party-skill-verifier/ # Static verifier for skills you did not write
 │   │   └── README.md             # Custom skills index & requirements
 │   ├── anthropic/                # Claude-focused engineering workflows
 │   │   └── README.md
 │   └── google/                   # Antigravity & Gemini-focused workflows
 │       └── README.md
-├── tests/                        # Pytest suite (294 tests) for all tooling & skill scripts
+├── tests/                        # Pytest suite (400+ tests) for all tooling & skill scripts
 │   ├── unit/                     # Validators, safety auditor, digests, every skill script
 │   ├── smoke/                    # Harness sanity: env isolation & network blocking
 │   ├── fixtures/                 # Deterministic test data factories
@@ -616,7 +619,7 @@ sequenceDiagram
 <br/>
 
 1. **💡 Ideate**: Identify a recurring, high-value developer workflow or domain-specific expertise.
-2. **✍️ Draft with LLM**: Use [`utils/skill-creator/SKILL-CREATOR-PROMPT.md`](./utils/skill-creator/SKILL-CREATOR-PROMPT.md) with Claude 3.7 or Antigravity.
+2. **✍️ Draft with LLM**: Use [`utils/skill-creator/SKILL-CREATOR-PROMPT.md`](./utils/skill-creator/SKILL-CREATOR-PROMPT.md) with Claude Code or Antigravity.
 3. **🩺 Lint in Skill Doctor**: Open [`utils/Skill-Doctor.html`](./utils/Skill-Doctor.html) and achieve a **Grade A Health Score ($\ge 85$)**.
 4. **🛡️ Attest & Evaluate**:
    - Provide realistic trigger prompts in `evals/test-cases.json`.

@@ -226,6 +226,39 @@ def validate_skill(skill_dir: Path) -> dict:
         "metrics": metrics
     }
 
+def audit_readme_parity(readme_path: Path, skills_root: Path) -> list:
+    """Two-way parity between the root README's skill links and skills/ on disk.
+
+    Direction 1: every skill the README links to must exist on disk (no
+    phantom references). Direction 2: every skill on disk must be linked
+    somewhere in the README (no unlisted skills) -- without this direction a
+    skill can land in the repository and pass CI while the catalog silently
+    omits it. Returns a list of error strings; empty means parity holds.
+    """
+    errors = []
+    referenced = set()
+    if readme_path.exists():
+        readme_content = readme_path.read_text(encoding="utf-8")
+        referenced = set(re.findall(
+            r'\(\.?/?skills/([a-z0-9_-]+)/([a-z0-9_-]+)(?:/SKILL\.md)?\)', readme_content))
+        for cat, name in sorted(referenced):
+            target_skill_dir = skills_root / cat / name
+            if not target_skill_dir.exists() or not (target_skill_dir / "SKILL.md").exists():
+                errors.append(f"README.md references non-existent skill '{name}' in category '{cat}'.")
+    if skills_root.exists():
+        for cat_dir in sorted(skills_root.iterdir()):
+            if not cat_dir.is_dir():
+                continue
+            for skill_dir in sorted(cat_dir.iterdir()):
+                if not skill_dir.is_dir() or not (skill_dir / "SKILL.md").exists():
+                    continue
+                if (cat_dir.name, skill_dir.name) not in referenced:
+                    errors.append(
+                        f"Skill '{cat_dir.name}/{skill_dir.name}' exists on disk "
+                        f"but is never referenced in README.md.")
+    return errors
+
+
 def main():
     if sys.stdout.encoding != 'utf-8':
         try:
@@ -273,25 +306,17 @@ def main():
     warned = sum(1 for r in all_results if r["status"] == "WARN")
     failed = sum(1 for r in all_results if r["status"] == "FAIL")
 
-    # 5. Verify README.md Catalog Parity
-    readme_errors = []
-    readme_path = repo_root / "README.md"
-    if readme_path.exists():
-        readme_content = readme_path.read_text(encoding="utf-8")
-        referenced_skills = re.findall(r'\(\.?/?skills/([a-z0-9_-]+)/([a-z0-9_-]+)(?:/SKILL\.md)?\)', readme_content)
-        for cat, name in referenced_skills:
-            target_skill_dir = skills_root / cat / name
-            if not target_skill_dir.exists() or not (target_skill_dir / "SKILL.md").exists():
-                readme_errors.append(f"README.md references non-existent skill '{name}' in category '{cat}'.")
+    # 5. Verify README.md Catalog Parity (both directions)
+    readme_errors = audit_readme_parity(repo_root / "README.md", skills_root)
 
     print("-" * 72)
     if readme_errors:
-        print(" [README AUDIT] ❌ Found mismatched or phantom skills in README.md:")
+        print(" [README AUDIT] ❌ README.md catalog and skills/ tree have drifted:")
         for r_err in readme_errors:
             print(f"    - {r_err}")
         failed += len(readme_errors)
     else:
-        print(" [README AUDIT] ✅ README.md catalog matches physical filesystem 1:1.")
+        print(" [README AUDIT] ✅ README.md catalog and skills/ tree match in both directions.")
 
     print("=" * 72)
     print(f" Summary: {total} skills scanned | {passed} Passed | {warned} Warnings | {failed} Failed")
