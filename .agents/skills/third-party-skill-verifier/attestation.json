@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "third-party-skill-verifier",
+  "version": "1.0.0",
+  "attestation_status": "TESTED",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "capabilities_rationale": "All four declarations are refusals, and each one is load-bearing rather than incidental. NETWORK: the tool never fetches; the bundle is obtained by the user in a separate, deliberate step, so a verifier pointed at hostile input has no channel to send what it reads. PROCESS_EXECUTION and DYNAMIC_CODE_EXECUTION: nothing in the bundle is imported, executed, or extracted; every file is read as bytes and analysed with `ast` and `re`. FILESYSTEM: the verification record is written to stdout, not to disk, so running the verifier can never be the step that modifies the thing it was asked to check. A tool that inspects code chosen by an adversary is only as trustworthy as the capabilities it does not have, and scripts/audit_skill_safety.py re-derives all four from this source on every commit.",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-08-31",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "not-recorded",
+      "status": "NOT_RUN",
+      "notes": "No end-to-end agent transcript has been recorded for this skill yet. The verifier script itself is covered by 113 automated tests (tests/unit/test_verify_skill_bundle.py and tests/unit/test_verifier_ruleset_parity.py) which run on every commit, but that is a statement about the script, not about how well an agent invokes it from this SKILL.md.",
+      "currency_caveat": "Recorded as NOT_RUN deliberately rather than left absent. Trigger accuracy against evals/test-cases.json has not been measured on any platform; do not read the test coverage below as evidence that the skill triggers correctly."
+    }
+  ],
+  "provenance": {
+    "source_type": "original",
+    "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
+    "license": "Apache-2.0"
+  },
+  "security_audit": {
+    "tool": "scripts/audit_skill_safety.py",
+    "method": "AST-based capability derivation over the verifier's own source, plus an instruction-surface scan of SKILL.md and references/. The four capability refusals above are re-derived from the code on every commit and the build fails if the code acquires any of them. tests/unit/test_verifier_ruleset_parity.py additionally fails the build if this skill's detection tables ever become weaker than the auditor's, so a stranger's skill can never be held to a lower standard than this repository's own.",
+    "last_run_date": "2026-08-31",
+    "last_run_result": "PASS",
+    "enforcement": "Re-run on every push and pull request. The content digest below means this attestation stops matching if any file in the skill is edited without re-attesting.",
+    "reproduce": "python scripts/audit_skill_safety.py --skill third-party-skill-verifier --strict",
+    "scope_caveat": "This audit covers the verifier's own code. It says nothing about the accuracy of the verifier's findings on other people's skills, which is bounded by the limits set out in references/THREAT-MODEL.md."
+  },
+  "content_digest": "sha256:ad55918e144deaf9c4d2d53d226d5e1166c64086a9e2843ff8c26a1651a3ecf7"
+}

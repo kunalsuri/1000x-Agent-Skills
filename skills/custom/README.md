@@ -26,11 +26,12 @@ Every skill introduced here must follow the repository's 3 core pillars:
 
 | Skill | Status | Description |
 |---|---|---|
-| [`multi-agent-docs`](./multi-agent-docs/SKILL.md) | `🟢 Verified` | Scaffolds & synchronizes identical `CLAUDE.md` and `AGENTS.md` across platforms. |
-| [`preflight-test-engineer`](./preflight-test-engineer/SKILL.md) | `🟢 Verified` | Pre-flight codebase analysis, /tests/ suite generation, and 4-stage verification for Python & TypeScript/React. |
-| [`public-repo-release-review`](./public-repo-release-review/SKILL.md) | `🟢 Verified` | Expert pre-flight audit for public GitHub releases: security/secret leaks, governance files, and link integrity. |
-| [`readme-designer`](./readme-designer/SKILL.md) | `🟢 Verified` | Modernizes and designs high-impact, world-class READMEs and documentation with rich spacing (`<br/>`), dividers (`---`), comparison matrices, and Mermaid diagrams. |
-| [`saas-app-builder`](./saas-app-builder/SKILL.md) | `🟢 Verified` | Scaffolds and implements full-stack SaaS apps with React 19, Tailwind CSS v4, shadcn/ui, single-port Express serving, and an integrated 4-harness test suite. |
+| [`multi-agent-docs`](./multi-agent-docs/SKILL.md) | `🟢 Checks passing` | Scaffolds & synchronizes identical `CLAUDE.md` and `AGENTS.md` across platforms. |
+| [`preflight-test-engineer`](./preflight-test-engineer/SKILL.md) | `🟢 Checks passing` | Pre-flight codebase analysis, /tests/ suite generation, and 4-stage verification for Python & TypeScript/React. |
+| [`public-repo-release-review`](./public-repo-release-review/SKILL.md) | `🟢 Checks passing` | Expert pre-flight audit for public GitHub releases: security/secret leaks, governance files, and link integrity. |
+| [`readme-designer`](./readme-designer/SKILL.md) | `🟢 Checks passing` | Modernizes and designs high-impact, world-class READMEs and documentation with rich spacing (`<br/>`), dividers (`---`), comparison matrices, and Mermaid diagrams. |
+| [`third-party-skill-verifier`](./third-party-skill-verifier/SKILL.md) | `🟢 Checks passing` | Statically verifies a skill written by someone else before you install it: reads every file in the bundle, reports what its code can actually do, and grades what runs without being invoked. Never fetches, writes, or executes. |
+| [`saas-app-builder`](./saas-app-builder/SKILL.md) | `🟢 Checks passing` | Scaffolds and implements full-stack SaaS apps with React 19, Tailwind CSS v4, shadcn/ui, single-port Express serving, and an integrated 4-harness test suite. |
 
 ---
 

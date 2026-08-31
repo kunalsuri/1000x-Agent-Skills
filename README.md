@@ -276,7 +276,7 @@ guards against for `CLAUDE.md`/`AGENTS.md`.
 
 ## 🎯 The 3 Core Pillars
 
-Every skill in this repository is governed by three non-negotiable engineering guarantees:
+Every skill in this repository is governed by three non-negotiable engineering checks, each re-run on every commit:
 
 <br/>
 
@@ -290,7 +290,7 @@ Every skill in this repository is governed by three non-negotiable engineering g
 
 <br/>
 
-| Pillar | File / Artifact | Guarantee & Technical Specification |
+| Pillar | File / Artifact | What Is Checked & Technical Specification |
 |---|---|---|
 | **1. 📋 Declared** | [`SKILL.md`](./skills/custom/multi-agent-docs/SKILL.md) | **Strict YAML frontmatter interface** (`name`, `version`, `description`, `allowed-tools`, `compatibility`, `tags`). Concise body limit ($\le 500$ lines) containing actionable procedural instructions. |
 | **2. 🛡️ Attested** | [`attestation.json`](./docs/ATTESTATION-SPEC.md) | Two things, kept distinct. **Enforced:** a `capabilities` declaration checked against the code by AST analysis, plus a `content_digest` that breaks if any file changes after attestation. **Recorded:** run reports on **Claude 3.7 Sonnet**, **Gemini 3.7 Flash** and **GPT-4o**, each carrying its own currency caveat. |
@@ -333,10 +333,11 @@ Skills are curated into **Custom** (cross-platform, multi-agent workflows), **An
 
 | Skill & Link | Version | Status | Highlights & Capabilities | Trigger Context |
 |---|:---:|:---:|---|---|
-| [**`multi-agent-docs`**](./skills/custom/multi-agent-docs/SKILL.md) | `v1.1.0` | `🟢 Verified` | • Deterministic project scaffolding (`scaffold.py`)<br/>• Automated multi-agent parity validation (`validate_sync.py`)<br/>• Synchronizes `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.agents/` | **Use when** configuring a repository for multi-agent workflows (Claude Code, Antigravity, Cursor, Codex) or when resolving instruction drift. |
-| [**`preflight-test-engineer`**](./skills/custom/preflight-test-engineer/SKILL.md) | `v1.0.0` | `🟢 Verified` | • Codebase AST & stack analyzer (`analyze_codebase.py`)<br/>• Deterministic `/tests/` test suite generator (`scaffold_tests.py`)<br/>• 4-stage pre-flight runner (`run_preflight.py`) | **Use when** asked to test a codebase before running, scaffold a test suite into `/tests/`, verify test coverage, or execute pre-flight sanity checks. |
-| [**`public-repo-release-review`**](./skills/custom/public-repo-release-review/SKILL.md) | `v1.0.0` | `🟢 Verified` | • Pre-flight public release audit engine (`audit_repo.py`)<br/>• Deep secret leak scanner & governance verification<br/>• Scaffolding for `SECURITY.md`, `COLLABORATORS.md`, `CITATION.cff` | **Use when** reviewing a codebase before public release, auditing repository security and governance, or preparing for public launch. |
-| [**`readme-designer`**](./skills/custom/readme-designer/SKILL.md) | `v1.0.0` | `🟢 Verified` | • Markdown visual design, spacing (`<br/>`) & structure<br/>• Automated diagnostic quality auditor (`audit_readme.py`)<br/>• Scaffolding engine for modern READMEs (`scaffold_readme.py`) | **Use when** creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, documentation, or landing page. |
+| [**`multi-agent-docs`**](./skills/custom/multi-agent-docs/SKILL.md) | `v1.1.0` | `🟢 Checks passing` | • Deterministic project scaffolding (`scaffold.py`)<br/>• Automated multi-agent parity validation (`validate_sync.py`)<br/>• Synchronizes `CLAUDE.md`, `AGENTS.md`, `.claude/`, `.agents/` | **Use when** configuring a repository for multi-agent workflows (Claude Code, Antigravity, Cursor, Codex) or when resolving instruction drift. |
+| [**`preflight-test-engineer`**](./skills/custom/preflight-test-engineer/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Codebase AST & stack analyzer (`analyze_codebase.py`)<br/>• Deterministic `/tests/` test suite generator (`scaffold_tests.py`)<br/>• 4-stage pre-flight runner (`run_preflight.py`) | **Use when** asked to test a codebase before running, scaffold a test suite into `/tests/`, verify test coverage, or execute pre-flight sanity checks. |
+| [**`public-repo-release-review`**](./skills/custom/public-repo-release-review/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Pre-flight public release audit engine (`audit_repo.py`)<br/>• Deep secret leak scanner & governance verification<br/>• Scaffolding for `SECURITY.md`, `COLLABORATORS.md`, `CITATION.cff` | **Use when** reviewing a codebase before public release, auditing repository security and governance, or preparing for public launch. |
+| [**`readme-designer`**](./skills/custom/readme-designer/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Markdown visual design, spacing (`<br/>`) & structure<br/>• Automated diagnostic quality auditor (`audit_readme.py`)<br/>• Scaffolding engine for modern READMEs (`scaffold_readme.py`) | **Use when** creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, documentation, or landing page. |
+| [**`third-party-skill-verifier`**](./skills/custom/third-party-skill-verifier/SKILL.md) | `v1.0.0` | `🟢 Checks passing` | • Static verification of skills written by **other people** (`verify_skill_bundle.py`)<br/>• Reads **every file in the bundle**, including the ones `SKILL.md` never mentions<br/>• Grades auto-executing files, shipped bytecode, hidden Unicode, and capability dishonesty<br/>• Findings carry **OWASP Agentic Skills Top 10** identifiers<br/>• Never fetches, never writes, never executes | **Use when** you have downloaded, cloned, or been sent a skill and need to know what it can do before installing it, or when re-checking an installed skill after an update. |
 
 <br/>
 
