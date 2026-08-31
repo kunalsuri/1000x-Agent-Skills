@@ -1,0 +1,12 @@
+{
+  "skill_name": "tidy-imports",
+  "version": "1.0.0",
+  "attestation_status": "DRAFT",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "capabilities_rationale": "Parses one file with ast and prints to stdout."
+}

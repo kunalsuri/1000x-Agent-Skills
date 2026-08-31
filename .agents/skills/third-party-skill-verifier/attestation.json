@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
   "skill_name": "third-party-skill-verifier",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "attestation_status": "TESTED",
   "capabilities": {
     "network": "none",
@@ -9,7 +9,7 @@
     "dynamic_code_execution": "none",
     "filesystem": "read-only"
   },
-  "capabilities_rationale": "All four declarations are refusals, and each one is load-bearing rather than incidental. NETWORK: the tool never fetches; the bundle is obtained by the user in a separate, deliberate step, so a verifier pointed at hostile input has no channel to send what it reads. PROCESS_EXECUTION and DYNAMIC_CODE_EXECUTION: nothing in the bundle is imported, executed, or extracted; every file is read as bytes and analysed with `ast` and `re`. FILESYSTEM: the verification record is written to stdout, not to disk, so running the verifier can never be the step that modifies the thing it was asked to check. A tool that inspects code chosen by an adversary is only as trustworthy as the capabilities it does not have, and scripts/audit_skill_safety.py re-derives all four from this source on every commit.",
+  "capabilities_rationale": "All four declarations are refusals, and each one is load-bearing rather than incidental. NETWORK: the tool never fetches; the bundle is obtained by the user in a separate, deliberate step, so a verifier pointed at hostile input has no channel to send what it reads. PROCESS_EXECUTION and DYNAMIC_CODE_EXECUTION: nothing in the bundle is imported, executed, or extracted; every file is read as bytes and analysed with `ast` and `re`. FILESYSTEM: the verification record is written to stdout, not to disk -- `--compare` reads a stored record, and still writes nothing, so running the verifier can never be the step that modifies the thing it was asked to check. A tool that inspects code chosen by an adversary is only as trustworthy as the capabilities it does not have, and scripts/audit_skill_safety.py re-derives all four from this source on every commit.",
   "attested_by": "Kunal Suri",
   "attestation_date": "2026-08-31",
   "tested_platforms": [
@@ -17,7 +17,7 @@
       "platform": "Claude Code",
       "model": "not-recorded",
       "status": "NOT_RUN",
-      "notes": "No end-to-end agent transcript has been recorded for this skill yet. The verifier script itself is covered by 113 automated tests (tests/unit/test_verify_skill_bundle.py and tests/unit/test_verifier_ruleset_parity.py) which run on every commit, but that is a statement about the script, not about how well an agent invokes it from this SKILL.md.",
+      "notes": "No end-to-end agent transcript has been recorded for this skill yet. The verifier script itself is covered by 147 automated tests (119 in tests/unit/test_verify_skill_bundle.py, 20 in tests/unit/test_verifier_ruleset_parity.py, 8 in tests/unit/test_demo_bundles.py) which run on every commit, but that is a statement about the script, not about how well an agent invokes it from this SKILL.md.",
       "currency_caveat": "Recorded as NOT_RUN deliberately rather than left absent. Trigger accuracy against evals/test-cases.json has not been measured on any platform; do not read the test coverage below as evidence that the skill triggers correctly."
     }
   ],
@@ -35,5 +35,5 @@
     "reproduce": "python scripts/audit_skill_safety.py --skill third-party-skill-verifier --strict",
     "scope_caveat": "This audit covers the verifier's own code. It says nothing about the accuracy of the verifier's findings on other people's skills, which is bounded by the limits set out in references/THREAT-MODEL.md."
   },
-  "content_digest": "sha256:48d5a178c80a7551291d6021d886fabb17c2729e23f11a3a7f0e0b4dd640b0b4"
+  "content_digest": "sha256:127ecc7e2bfd07de411d2a961da42b19421e01d4e0779b6aebd9b678a0c237e4"
 }

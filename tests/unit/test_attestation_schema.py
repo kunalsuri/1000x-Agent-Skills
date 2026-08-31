@@ -75,6 +75,12 @@ class TestShippedAttestations:
         for attestation in sorted(repo_root.rglob("attestation.json")):
             if ".git" in attestation.parts:
                 continue
+            # demo/ holds bundles written by imaginary strangers, for the
+            # verifier to read. Holding them to this repository's schema would
+            # be holding a stranger's file to a standard they never agreed to
+            # -- which is exactly the assumption the verifier refuses to make.
+            if "demo" in attestation.parts:
+                continue
             for message in validate(json.loads(attestation.read_text(encoding="utf-8"))):
                 failures.append(f"{attestation.relative_to(repo_root)}: {message}")
         assert not failures, "\n".join(failures)

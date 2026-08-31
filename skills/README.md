@@ -13,7 +13,7 @@
 
 <br/>
 
-[**⚡ Quick Install**](#-1-liner-skill-installation) &nbsp;•&nbsp; [**💡 Overview**](#-overview--architecture) &nbsp;•&nbsp; [**🟢 Custom Skills**](./custom/README.md) &nbsp;•&nbsp; [**🟣 Anthropic Skills**](./anthropic/README.md) &nbsp;•&nbsp; [**🔵 Google Skills**](./google/README.md) &nbsp;•&nbsp; [**📖 Specification**](../docs/SPECIFICATIONS.md)
+[**⚡ Quick Install**](#-1-liner-skill-installation) &nbsp;•&nbsp; [**💡 Overview**](#-overview--architecture) &nbsp;•&nbsp; [**🟢 Custom Skills**](./custom/README.md) &nbsp;•&nbsp; [**🟣 Anthropic Skills**](./anthropic/README.md) &nbsp;•&nbsp; [**📖 Specification**](../docs/SPECIFICATIONS.md)
 
 <br/>
 
@@ -40,7 +40,6 @@ flowchart TD
     subgraph Catalog ["🧩 Skills Catalog Directory"]
         A["<b>skills/custom/</b><br/>Multi-Agent & Workflow Skills"]
         B["<b>skills/anthropic/</b><br/>Claude Code Native Skills"]
-        C["<b>skills/google/</b><br/>Antigravity & Gemini Skills"]
     end
 
     subgraph Router ["⚡ Runtime Intent Router"]
@@ -53,7 +52,6 @@ flowchart TD
 
     A --> D
     B --> D
-    C --> D
     D -- "Match Found" --> E
 ```
 
@@ -65,7 +63,8 @@ flowchart TD
 
 ## 🎯 Catalog Structure & Partitioning
 
-Skills in this library are organized into three clear sub-ecosystems:
+Skills in this library are organized into two sub-ecosystems. A category is
+created when it has a skill in it, not before:
 
 <br/>
 
@@ -73,7 +72,6 @@ Skills in this library are organized into three clear sub-ecosystems:
 |---|---|:---:|---|
 | [**`skills/custom/`**](./custom/README.md) | **Cross-Platform & Engineering Workflows**: Multi-agent docs sync, pre-flight release auditing, documentation modernizing, and domain workflows. | `🟢 Active` | Claude Code, Google Antigravity, Cursor, OpenAI Codex |
 | [**`skills/anthropic/`**](./anthropic/README.md) | **Claude Code Native Workflows**: Deep subagent delegation, Bash/MCP optimization, and Claude-specific command sets. | `🟡 In Progress` | Anthropic Claude Code CLI & Desktop |
-| [**`skills/google/`**](./google/README.md) | **Google Antigravity & Gemini Workflows**: Sidecar integrations, AGY slash commands, and workspace plugin bundles. | `🟡 In Progress` | Google Antigravity 2.0 & Gemini IDE |
 
 <br/>
 
