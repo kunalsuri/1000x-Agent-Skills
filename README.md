@@ -352,6 +352,37 @@ Skills are curated into **Custom** (cross-platform, multi-agent workflows), **An
 
 <br/>
 
+### 🟣 Vendored Anthropic Skills (Reference)
+
+Not written here. These are upstream Anthropic skills, vendored **unmodified** and
+Apache-2.0 licensed, kept in the catalogue so the shape of a first-party skill can be
+read next to ours. They carry `attestation_status: DRAFT` and `provenance.source_type:
+vendored`, and their `tested_platforms` rows say `NOT_RUN`, because this repository has
+derived their capabilities and has **not** evaluated them. Upstream declares no
+`version:` in frontmatter, so the Skill Doctor reports one warning each; that warning is
+accurate and is left standing rather than papered over with a version number Anthropic
+never published.
+
+<br/>
+
+| Skill & Link | Upstream | Status | What Its Code Can Actually Do | Trigger Context |
+|---|:---:|:---:|---|---|
+| [**`skill-creator`**](./skills/anthropic/skill-creator/SKILL.md) | `3b3fad9` | `🟣 Vendored · DRAFT` | • `network: outbound`, `process_execution: subprocess`, `filesystem: workspace-delete`<br/>• Spawns agent subprocesses to run test prompts with-skill and baseline<br/>• Grades pairs with a judge subagent, renders a side-by-side review<br/>• Tunes the frontmatter `description` for trigger accuracy | **Use when** authoring a new skill, evaluating an existing one, or fixing a skill that triggers on the wrong prompts. |
+| [**`mcp-builder`**](./skills/anthropic/mcp-builder/SKILL.md) | `3b3fad9` | `🟣 Vendored · DRAFT` | • `network: outbound`, `process_execution: subprocess`, `filesystem: workspace-write`<br/>• Both declared **above** what `audit_skill_safety.py` can derive — they live behind the `anthropic` and `mcp` SDKs<br/>• `stdio_client(StdioServerParameters(command=...))` launches an arbitrary child process<br/>• Ships an MCP evaluation harness and per-language server references | **Use when** building or reviewing an MCP server, designing its tool schemas, or writing an evaluation suite for one. |
+
+<br/>
+
+> [!WARNING]
+> **Vendoring is not endorsement, and the licence gate is real.** Anthropic's `docx`,
+> `pdf`, `pptx` and `xlsx` skills are *source-available, not open source* — `© Anthropic,
+> PBC. All rights reserved`, governed by Anthropic's own terms — and `doc-coauthoring`
+> ships no licence file at all. None of those five can be redistributed here. Only the
+> Apache-2.0 skills are eligible, and each vendored bundle is scanned with
+> [`third-party-skill-verifier`](./skills/custom/third-party-skill-verifier/SKILL.md)
+> before it lands; the resulting verdict is recorded verbatim in its `attestation.json`.
+
+<br/>
+
 > [!TIP]
 > **Explore Category Indexes**:
 > - 📂 [**Custom Skills Index (`skills/custom/`)**](./skills/custom/README.md)

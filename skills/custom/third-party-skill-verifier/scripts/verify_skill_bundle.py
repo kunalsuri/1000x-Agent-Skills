@@ -88,7 +88,7 @@ import os
 import re
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 TOOL_NAME = "verify_skill_bundle.py"
@@ -986,6 +986,51 @@ def extract_destinations(text: str) -> Set[str]:
 # by the word appearing inside a string or a comment.
 # ---------------------------------------------------------------------------
 
+# Modules that ship with the interpreter. Every other import comes from
+# outside the bundle, and a static reader cannot see what it does: the AST has
+# the name `requests_oauthlib`, not the socket inside it. Mirrors
+# scripts/audit_skill_safety.py, which must never catch something this misses.
+STDLIB_MODULES: Set[str] = set(getattr(sys, "stdlib_module_names", ()))
+
+
+def bundle_module_names(rels: List[str]) -> Set[str]:
+    """Module names a bundle can import from its own files.
+
+    `from connections import x` beside connections.py is local source, which is
+    itself in scope for this scan, not an unreviewable dependency.
+    """
+    names: Set[str] = set()
+    for rel in rels:
+        path = PurePosixPath(rel)
+        if path.suffix == ".py":
+            names.add(path.stem)
+            if path.stem == "__init__" and path.parent.name:
+                names.add(path.parent.name)
+    return names
+
+
+def is_unprovable_import(root: str, local_modules: Set[str]) -> bool:
+    """True for an import whose capabilities cannot be derived from this source."""
+    if root in NETWORK_MODULES or root in PROCESS_MODULES or root in DYNAMIC_MODULES:
+        return False
+    if root in STDLIB_MODULES or root in local_modules:
+        return False
+    return bool(STDLIB_MODULES)
+
+
+def _module_roots_with_lines(tree: ast.AST) -> Dict[str, int]:
+    """Top-level module name -> the first line it is imported on."""
+    roots: Dict[str, int] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                roots.setdefault(alias.name.split(".")[0], node.lineno)
+        elif isinstance(node, ast.ImportFrom):
+            if node.module and not node.level:
+                roots.setdefault(node.module.split(".")[0], node.lineno)
+    return roots
+
+
 def _module_roots(tree: ast.AST) -> Set[str]:
     roots: Set[str] = set()
     for node in ast.walk(tree):
@@ -1011,7 +1056,9 @@ def _open_is_writable(node: ast.Call) -> bool:
     return bool(mode) and any(ch in mode for ch in "wax+")
 
 
-def observe_python(text: str, rel: str) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
+def observe_python(text: str, rel: str,
+                   local_modules: Set[str] = frozenset(),
+                   ) -> Tuple[Dict[str, str], List[Dict[str, Any]]]:
     """Return (observed capabilities, findings) for one Python source file."""
     observed = dict(DEFAULT_DECLARATION)
     out: List[Dict[str, Any]] = []
@@ -1035,7 +1082,7 @@ def observe_python(text: str, rel: str) -> Tuple[Dict[str, str], List[Dict[str, 
 
     evidence: List[Dict[str, Any]] = []
 
-    for root in sorted(_module_roots(tree)):
+    for root, lineno in sorted(_module_roots_with_lines(tree).items()):
         if root in NETWORK_MODULES:
             raise_to("network", "outbound")
             evidence.append(finding("EXT-CAPABILITY", "INFO", rel,
@@ -1048,6 +1095,17 @@ def observe_python(text: str, rel: str) -> Tuple[Dict[str, str], List[Dict[str, 
             raise_to("dynamic_code_execution", "eval")
             evidence.append(finding("EXT-CAPABILITY", "INFO", rel,
                                     f"imports '{root}' -> dynamic_code_execution: eval"))
+        if is_unprovable_import(root, local_modules):
+            out.append(finding(
+                "EXT-CAP-UNPROVEN", "HIGH", rel,
+                f"imports '{root}', which is not in the standard library, not a "
+                f"file in this bundle, and not a module this tool has capability "
+                f"rules for. The capability summary above therefore does not "
+                f"cover it: whatever '{root}' does when called, this skill does. "
+                f"Installing the skill also installs that dependency, which "
+                f"nothing here has read. Establish what it is before installing.",
+                lineno, owasp="AST01",
+            ))
 
     for node in ast.walk(tree):
         if not isinstance(node, ast.Call):
@@ -1804,6 +1862,7 @@ def verify_bundle(root: Path, expect_digest: Optional[str] = None,
     observed = dict(DEFAULT_DECLARATION)
     destinations: Set[str] = set()
     counts: Dict[str, int] = {}
+    local_modules = bundle_module_names([item.rel for item in files])
 
     for item in files:
         counts[item.klass] = counts.get(item.klass, 0) + 1
@@ -1820,7 +1879,8 @@ def verify_bundle(root: Path, expect_digest: Optional[str] = None,
 
         file_observed = dict(DEFAULT_DECLARATION)
         if item.klass == "python":
-            file_observed, py_findings = observe_python(item.text, item.rel)
+            file_observed, py_findings = observe_python(
+                item.text, item.rel, local_modules)
             findings.extend(py_findings)
             findings.extend(scan_obfuscation(item.text, item.rel))
             merge_observed(observed, file_observed)

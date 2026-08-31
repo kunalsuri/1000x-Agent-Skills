@@ -226,6 +226,32 @@ def validate_skill(skill_dir: Path) -> dict:
         "metrics": metrics
     }
 
+def audit_tree_layout(skills_root: Path) -> list:
+    """Every SKILL.md under skills/ must sit at skills/<category>/<skill>/SKILL.md.
+
+    This validator walks exactly two levels. scripts/audit_skill_safety.py and
+    scripts/skill_digest.py both rglob for SKILL.md and so reach any depth. A
+    skill nested deeper therefore used to be audited and digested but never
+    health-checked, and nothing said so -- it was skipped in silence, which is
+    the worst way for a check to decline to run. Reporting the layout error is
+    what keeps the three tools looking at the same set of skills.
+    """
+    errors = []
+    if not skills_root.exists():
+        return errors
+    for skill_md in sorted(skills_root.rglob("SKILL.md")):
+        # (category, skill, "SKILL.md")
+        parts = skill_md.relative_to(skills_root).parts
+        if len(parts) != 3:
+            found = "skills/" + "/".join(parts)
+            errors.append(
+                f"'{found}' is not at skills/<category>/<skill>/SKILL.md, so this "
+                f"validator never sees it -- while the safety auditor and the digest "
+                f"tool both do. Move it to the canonical depth."
+            )
+    return errors
+
+
 def audit_readme_parity(readme_path: Path, skills_root: Path) -> list:
     """Two-way parity between the root README's skill links and skills/ on disk.
 
@@ -308,8 +334,17 @@ def main():
 
     # 5. Verify README.md Catalog Parity (both directions)
     readme_errors = audit_readme_parity(repo_root / "README.md", skills_root)
+    layout_errors = audit_tree_layout(skills_root)
 
     print("-" * 72)
+    if layout_errors:
+        print(" [LAYOUT AUDIT] \u274c skills/ contains a SKILL.md this validator cannot reach:")
+        for l_err in layout_errors:
+            print(f"    - {l_err}")
+        failed += len(layout_errors)
+    else:
+        print(" [LAYOUT AUDIT] \u2705 every SKILL.md sits at skills/<category>/<skill>/.")
+
     if readme_errors:
         print(" [README AUDIT] ❌ README.md catalog and skills/ tree have drifted:")
         for r_err in readme_errors:

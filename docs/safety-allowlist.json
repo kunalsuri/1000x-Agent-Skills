@@ -56,6 +56,54 @@
       "reason": "Deliberate over-declaration. The AST can prove this script deletes and writes directories, but not that the paths resolve under the user's HOME rather than the workspace. 'unrestricted' is the truthful label for a tool that replaces directories in ~/.claude/skills; tightening it to 'workspace-delete' would understate the real blast radius."
     },
     {
+      "path": "scripts/validate_skills.py",
+      "check": "CAP-UNPROVEN",
+      "fingerprint": "b3a892ffd3a14848",
+      "reason": "Reviewed 2026-08-31: the deliberate optional `import jsonschema`, guarded by try/except with a documented stdlib fallback so the no-dependency CI job still validates. The finding is correct -- jsonschema's capabilities are not derivable from this source -- and is accepted rather than removed because the alternative is hand-rolling JSON Schema validation. The package is used for one thing, validating attestation.json against docs/schemas/, and it is pinned in requirements-dev.txt where it can be reviewed and updated deliberately."
+    },
+    {
+      "path": "skills/anthropic/mcp-builder",
+      "check": "CAP-OVERDECLARED",
+      "fingerprint": "b3a52c72f0d195e2",
+      "reason": "Deliberate over-declaration on a vendored skill. The auditor derives this capability as 'none' because it is exercised through a third-party SDK rather than a module in its import table: scripts/evaluation.py imports the `anthropic` client and calls the Claude API, and scripts/connections.py calls stdio_client(StdioServerParameters(command=...)), which launches an arbitrary command as a child process. The declaration in attestation.json states what the code does; the auditor states what it can prove from imports alone. Where those differ on vendored code, the stronger and true value is declared and pinned here rather than silently narrowed to whatever turns the build green."
+    },
+    {
+      "path": "skills/anthropic/mcp-builder",
+      "check": "CAP-OVERDECLARED",
+      "fingerprint": "bac97b9487ea59c7",
+      "reason": "Second of the two deliberate over-declarations on this vendored skill; see the entry above for the full reasoning. Both are recorded separately so that if either capability later becomes derivable -- because the auditor's tables grow, or because the vendored code stops using the SDK -- that one exemption stops applying on its own and resurfaces for review."
+    },
+    {
+      "path": "skills/anthropic/mcp-builder/scripts/connections.py",
+      "check": "CAP-UNPROVEN",
+      "fingerprint": "4b59f8e45b1d7b34",
+      "reason": "Reviewed 2026-08-31: `from mcp...` in vendored upstream code. This is the import the whole CAP-UNPROVEN check was added for. It resolves to stdio_client(StdioServerParameters(command=..., args=..., env=...)), which launches an arbitrary command as a child process -- a capability no import table can see. attestation.json therefore declares process_execution: subprocess and network: outbound rather than the 'none' the AST would otherwise have reported. Suppressed because the capability it hides is now declared, not because it was judged harmless."
+    },
+    {
+      "path": "skills/anthropic/mcp-builder/scripts/evaluation.py",
+      "check": "CAP-UNPROVEN",
+      "fingerprint": "5cb16088223fbaf6",
+      "reason": "Reviewed 2026-08-31: `from anthropic import Anthropic` in vendored upstream code, which calls the Claude API over the network. Same disposition as the connections.py entry above: the capability is undetectable structurally, so it is declared in attestation.json as network: outbound and the finding is pinned here. Note that scripts/requirements.txt pulls both `anthropic` and `mcp` from PyPI and nothing in this repository has audited those packages -- running this skill's evaluation harness runs them."
+    },
+    {
+      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "1c530155fd97159b",
+      "reason": "Reviewed 2026-08-31: four identical `base64.b64encode(raw).decode(\"ascii\")` call sites (lines 167, 179, 190, 202), which share one fingerprint because the line text is identical. Each reads a local image, PDF or spreadsheet produced by an eval run and encodes it into a data: URI so the generated review page is a single self-contained HTML file. Encoding local output for display is the opposite of the pattern this check exists to catch; there is no b64decode anywhere in the bundle."
+    },
+    {
+      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
+      "check": "PY-OBFUSCATION",
+      "fingerprint": "c57bdd786c5db31c",
+      "reason": "Reviewed 2026-08-31: the `import base64` line in vendored upstream code. The module is used only to ENCODE local files, never to decode a payload -- see the entry below for the four call sites. Flagged because the check matches the import itself, which is correct behaviour for a check pointed at strangers' code."
+    },
+    {
+      "path": "skills/anthropic/skill-creator/scripts/quick_validate.py",
+      "check": "CAP-UNPROVEN",
+      "fingerprint": "4cbce242f4e6abc8",
+      "reason": "Reviewed 2026-08-31: `import yaml` (PyYAML) in vendored upstream code, used at line 77 to parse SKILL.md frontmatter. Read before accepting: it calls yaml.safe_load, not yaml.load, so the loader cannot construct arbitrary Python objects from the document -- which is the specific reason an unproven YAML dependency is worth reading rather than waving through. The capability remains underivable and the finding stands as the record of that."
+    },
+    {
       "path": "skills/custom/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "13a3748e396f23fa",

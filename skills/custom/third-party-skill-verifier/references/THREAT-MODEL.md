@@ -27,6 +27,7 @@ those two sets is where the published bypasses live.
 | Review evasion | `EXT-WHITESPACE-INFLATION`, `EXT-LONG-LINE`, `EXT-ENCODED-BLOB`, `EXT-OBFUSCATION`, `EXT-BYTECODE` | Content shaped to be unreadable |
 | Unreviewable content | `EXT-NATIVE-BINARY`, `EXT-OPAQUE-BINARY`, `EXT-NESTED-ARCHIVE`, `EXT-UNDECODABLE-*`, `EXT-OVERSIZE-FILE` | Reported as unverified, never as clean |
 | Capability dishonesty | `EXT-CAP-UNDECLARED` | The code exceeds the bundle's own claims |
+| Capability beyond reach of the reader | `EXT-CAP-UNPROVEN`, `EXT-UNVERIFIABLE-CODE` | Reported as underived, never as `none` |
 | Over-privilege | `EXT-OVER-PRIVILEGE`, `EXT-TOOL-GRANT` | What installing actually grants |
 | Silent update | `EXT-DIGEST-MISMATCH` | The bundle is no longer what was reviewed |
 | Scope escape | `EXT-SYMLINK-ESCAPE`, `EXT-SYMLINK` | Paths that reach outside the bundle |

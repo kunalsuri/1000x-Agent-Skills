@@ -1,0 +1,39 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "skill-creator",
+  "version": "1.0.0",
+  "attestation_status": "DRAFT",
+  "capabilities": {
+    "network": "outbound",
+    "process_execution": "subprocess",
+    "dynamic_code_execution": "none",
+    "filesystem": "workspace-delete"
+  },
+  "capabilities_rationale": "This skill is vendored, not written here, so these four values are transcribed from what scripts/audit_skill_safety.py derives from the source rather than from any intent of ours. NETWORK and PROCESS_EXECUTION: the eval harness (scripts/run_eval.py, scripts/run_loop.py) spawns Claude Code subprocesses to execute test prompts and reaches the network to do so -- running the skill means running an agent, which is the whole point of it and also its largest capability. FILESYSTEM 'workspace-delete': the harness clears and rewrites its own run directories between iterations. DYNAMIC_CODE_EXECUTION is the one refusal: no eval, exec, compile, pickle, marshal or importlib anywhere in the bundle. Read this block as a description of an upstream tool, not as an endorsement of it.",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-08-31",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "not-recorded",
+      "status": "NOT_RUN",
+      "notes": "Vendored for display in this catalogue. No trigger suite has been run against evals/test-cases.json on any platform, and no end-to-end transcript has been recorded. The prompts in evals/ were written here to describe the skill's intended trigger surface; they have never been executed as a measurement.",
+      "currency_caveat": "Recorded as NOT_RUN deliberately rather than left absent. attestation_status is DRAFT for the same reason: this repository has read this skill and derived its capabilities, and has not evaluated it."
+    }
+  ],
+  "provenance": {
+    "source_type": "vendored",
+    "origin_url": "https://github.com/anthropics/skills/tree/main/skills/skill-creator",
+    "license": "Apache-2.0",
+    "upstream_commit": "3b3fad96af16a10759d930941b4520ba0c40edae"
+  },
+  "security_audit": {
+    "tool": "skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py",
+    "method": "This repository's own third-party verifier was run over the bundle as an untrusted stranger's skill, which is what it is. Verdict: NEEDS REVIEW -- 0 critical, 6 high, 45 info. The six high findings were read and resolved as follows. Five are base64 use in eval-viewer/generate_review.py, which encodes local images, PDFs and spreadsheets into data: URIs so the generated review page is a single self-contained HTML file; it encodes, and never decodes, an attacker-supplied payload. The sixth is EXT-UNREFERENCED-EXECUTABLE on scripts/aggregate_benchmark.py: real, and worth knowing. Nothing in SKILL.md names that file, so a reviewer following the documentation alone would never open it. It was read directly: it aggregates benchmark JSON across runs and computes variance. Unreferenced is not the same as malicious, but it is the shape payloads have shipped in, so it is recorded here rather than waved through.",
+    "last_run_date": "2026-08-31",
+    "last_run_result": "PASS",
+    "reproduce": "python skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py skills/anthropic/skill-creator",
+    "scope_caveat": "A static scan of vendored code. It is not a certification and not a claim that this bundle is safe; the verifier's own output says so at greater length. The capabilities above are the load-bearing statement, and they are re-derived by CI on every commit."
+  },
+  "content_digest": "sha256:b7916106590dda2f2d2b0e30eb4a7d6b157e00e943e4602188b915d04195e65e"
+}

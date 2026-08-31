@@ -1,0 +1,48 @@
+{
+  "skill_name": "mcp-builder",
+  "description": "Trigger evaluation for the vendored Anthropic mcp-builder. Positive prompts describe designing, building or evaluating an MCP server; negative prompts describe adjacent work that must NOT pull it in -- consuming an already-running MCP server is not building one, and authoring a skill is skill-creator's job. These prompts were written in this repository to describe the skill's intended trigger surface. They have not been executed as a measurement; attestation.json records the skill as NOT_RUN.",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "I want to expose our internal ticketing API to Claude. Can you build an MCP server for it?",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "Review my MCP server's tool definitions -- the descriptions and schemas feel wrong.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Write an evaluation suite for the MCP server I just built so I know the tools actually work.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-04",
+        "prompt": "What is the right way to structure tools and error handling in a Python MCP server?",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "Add the GitHub MCP server to my Claude Code config.",
+        "expected_trigger": false,
+        "rationale": "Configuring an existing server is client setup, not server authoring. Nothing is being built."
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Create a skill that documents our deployment runbook.",
+        "expected_trigger": false,
+        "rationale": "Authoring a skill is skill-creator. A skill and an MCP server are different artifacts."
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Our REST API returns 500s under load. Help me debug the connection pooling.",
+        "expected_trigger": false,
+        "rationale": "General backend debugging. 'Protocol' and 'server' in the prompt must not be enough on their own."
+      }
+    ]
+  }
+}

@@ -129,6 +129,13 @@ be the code you read.
 its code does. A declaration the code exceeds is worse than no declaration,
 because it is the document you would have trusted instead of reading.
 
+**`EXT-CAP-UNPROVEN`** -- the bundle imports a package that is not in the
+standard library, not one of its own files, and not one this tool has rules
+for. The capability summary does not cover it: whatever that package does
+when called, the skill does. Installing the skill installs the dependency
+too, and nothing here has read it. This is not an accusation against the
+package; it marks where the structural reading stopped.
+
 **`EXT-INVISIBLE-UNICODE`, `EXT-BIDI-CONTROL`, `EXT-HIDDEN-DIRECTIVE`** --
 instructions that reach the model but not the reviewer.
 
