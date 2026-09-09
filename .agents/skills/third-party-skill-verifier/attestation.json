@@ -35,5 +35,5 @@
     "reproduce": "python scripts/audit_skill_safety.py --skill third-party-skill-verifier --strict",
     "scope_caveat": "This audit covers the verifier's own code. It says nothing about the accuracy of the verifier's findings on other people's skills, which is bounded by the limits set out in references/THREAT-MODEL.md."
   },
-  "content_digest": "sha256:48d5a178c80a7551291d6021d886fabb17c2729e23f11a3a7f0e0b4dd640b0b4"
+  "content_digest": "sha256:86eed0c9a0d2822698f21a6f98821dc006eacd315cdd5dab81409ce1250c6a66"
 }

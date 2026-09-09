@@ -12,3 +12,9 @@
 # equally on every platform, so this is for author-side tooling, not a
 # functional requirement.
 *.ps1 text eol=crlf
+
+# Skills catalogs: canonical attestations and content digests require LF across all platforms
+skills/** text eol=lf
+.agents/skills/** text eol=lf
+.claude/skills/** text eol=lf
+

@@ -548,7 +548,7 @@ def enumerate_bundle(root: Path) -> Tuple[List[BundleFile], List[Dict[str, Any]]
     truncated = False
 
     stack: List[Path] = [root]
-    seen_dirs: Set[Tuple[int, int]] = set()
+    seen_dirs: Set[Any] = set()
 
     while stack:
         current = stack.pop()
@@ -591,13 +591,12 @@ def enumerate_bundle(root: Path) -> Tuple[List[BundleFile], List[Dict[str, Any]]
                     continue
                 try:
                     stat = entry.stat(follow_symlinks=False)
-                    key = (stat.st_dev, stat.st_ino)
+                    key = (stat.st_dev, stat.st_ino) if stat.st_ino != 0 else str(entry_path.resolve())
                 except OSError:
-                    key = None
-                if key is not None:
-                    if key in seen_dirs:
-                        continue
-                    seen_dirs.add(key)
+                    key = str(entry_path.resolve())
+                if key in seen_dirs:
+                    continue
+                seen_dirs.add(key)
                 stack.append(entry_path)
                 continue
 

@@ -15,6 +15,23 @@ import pytest
 pytestmark = pytest.mark.unit
 
 
+def _can_symlink() -> bool:
+    try:
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "s"
+            src.mkdir()
+            dst = Path(td) / "d"
+            dst.symlink_to(src, target_is_directory=True)
+        return True
+    except OSError:
+        return False
+
+
+CAN_SYMLINK = _can_symlink()
+SYMLINK_SKIP = "Symlink creation not permitted in this environment"
+
+
 @pytest.fixture
 def installer(load_script):
     return load_script("scripts/install_to_agent.py")
@@ -86,6 +103,7 @@ class TestReplacementGuard:
         ok, why = installer.is_replaceable_skill_dir(target / "notaskill", target)
         assert ok is False and "SKILL.md" in why
 
+    @pytest.mark.skipif(not CAN_SYMLINK, reason=SYMLINK_SKIP)
     def test_symlink_is_refused(self, installer, tmp_path):
         """Following a symlink would let a link in the target delete anything."""
         target = tmp_path / "skills"
@@ -96,6 +114,7 @@ class TestReplacementGuard:
         ok, why = installer.is_replaceable_skill_dir(link, target)
         assert ok is False and "symlink" in why
 
+    @pytest.mark.skipif(not CAN_SYMLINK, reason=SYMLINK_SKIP)
     def test_symlink_pointing_inside_the_target_is_still_refused(self, installer, tmp_path):
         """
         The case the symlink check exists for: a link whose resolved parent IS

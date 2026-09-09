@@ -25,6 +25,23 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
+
+def _can_symlink() -> bool:
+    try:
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            src = Path(td) / "s"
+            src.write_text("1")
+            dst = Path(td) / "d"
+            dst.symlink_to(src)
+        return True
+    except OSError:
+        return False
+
+
+CAN_SYMLINK = _can_symlink()
+SYMLINK_SKIP = "Symlink creation not permitted in this environment"
+
 SCRIPT = "skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py"
 
 BENIGN_SKILL_MD = """---
@@ -524,6 +541,7 @@ class TestOpaqueContent:
         assert checks(record, "EXT-OPAQUE-BINARY") == []
 
 
+@pytest.mark.skipif(not CAN_SYMLINK, reason=SYMLINK_SKIP)
 class TestSymlinks:
     def test_symlink_escaping_the_bundle_is_critical(self, verifier, bundle):
         root = bundle()
@@ -594,6 +612,7 @@ class TestDigestPinning:
         record = verifier.verify_bundle(root, expect_digest=digest)
         assert checks(record, "EXT-DIGEST-MISMATCH")
 
+    @pytest.mark.skipif(not CAN_SYMLINK, reason=SYMLINK_SKIP)
     def test_digest_covers_symlink_targets(self, verifier, bundle):
         """Repointing a symlink changes no file's bytes; it must still count."""
         root = bundle()

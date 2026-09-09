@@ -39,7 +39,8 @@ class TestFilesExist:
     def test_linux_script_exists_and_is_executable(self, repo_root, name):
         path = repo_root / LINUX_DIR / name
         assert path.is_file(), path
-        assert path.stat().st_mode & 0o111, f"{path} is not executable (chmod +x)"
+        if sys.platform != "win32":
+            assert path.stat().st_mode & 0o111, f"{path} is not executable (chmod +x)"
 
     @pytest.mark.parametrize("name", ["dev-setup.ps1", "dev-test.ps1"])
     def test_windows_script_exists(self, repo_root, name):
@@ -55,7 +56,8 @@ class TestBashSyntax:
     @pytest.mark.parametrize("name", ["dev-setup.sh", "dev-test.sh"])
     def test_script_passes_bash_syntax_check(self, repo_root, name):
         path = repo_root / LINUX_DIR / name
-        result = subprocess.run(["bash", "-n", str(path)], capture_output=True, text=True)
+        rel = (LINUX_DIR / name).as_posix()
+        result = subprocess.run(["bash", "-n", rel], cwd=str(repo_root), capture_output=True, text=True)
         assert result.returncode == 0, result.stderr
 
     @pytest.mark.parametrize("name", ["dev-setup.sh", "dev-test.sh"])

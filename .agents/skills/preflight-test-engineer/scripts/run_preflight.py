@@ -14,6 +14,7 @@ import subprocess
 import time
 import argparse
 import py_compile
+import shutil
 from pathlib import Path
 from typing import Dict, List, Any, Tuple
 
@@ -44,6 +45,10 @@ def check_python_syntax(target_dir: Path) -> Tuple[bool, List[str]]:
 def run_command_capture(cmd: List[str], cwd: Path, timeout_sec: int = 30) -> Tuple[int, str, str]:
     """Runs a shell command and captures stdout/stderr with a timeout."""
     try:
+        if not cmd:
+            return 1, "", "Empty command."
+        if not shutil.which(cmd[0]):
+            raise FileNotFoundError(f"Executable '{cmd[0]}' not found in PATH.")
         proc = subprocess.run(
             cmd,
             cwd=str(cwd),
