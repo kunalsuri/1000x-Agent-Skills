@@ -1,0 +1,51 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "cross-platform-dev-scripts",
+  "version": "1.0.0",
+  "attestation_status": "VERIFIED",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "subprocess",
+    "dynamic_code_execution": "none",
+    "filesystem": "workspace-write"
+  },
+  "capabilities_rationale": "scaffold_dev_scripts.py writes scripts/win/ and scripts/linux/ trees into the target repository; validate_dev_scripts.py checks script syntax via bash -n and pwsh subprocess probes when available and reads generated files. No network access.",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-09-14",
+  "tested_platforms": [
+    {
+      "platform": "Google Antigravity",
+      "model": "gemini-3.8-flash",
+      "status": "PASS",
+      "notes": "Verified cross-platform dev script scaffolding and validation on Windows and Linux targets.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
+    },
+    {
+      "platform": "Claude Code",
+      "model": "claude-3-7-sonnet",
+      "status": "PASS",
+      "notes": "Verified deterministic generation of scripts/win and scripts/linux.",
+      "currency_caveat": "This entry carries no version tag and has not been re-run since it was recorded. Read it as 'passed once, on the version current at attestation_date', not as a standing guarantee about the code as it stands today. The checks that ARE re-run on every commit are the capability audit, the content digest and the test suite -- see security_audit below and .github/workflows/ci.yml."
+    }
+  ],
+  "performance_summary": {
+    "success_rate_percent": 100,
+    "average_token_consumption": 650,
+    "recovery_resilience": "High",
+    "methodology_caveat": "average_token_consumption and recovery_resilience are illustrative, not the output of a documented, repeatable measurement (no run logs, no sample size, no definition of what 'recovery' was tested against). Treat them as approximate rather than as measured facts until a real methodology is attached."
+  },
+  "provenance": {
+    "source_type": "original",
+    "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
+    "license": "Apache-2.0"
+  },
+  "security_audit": {
+    "tool": "scripts/audit_skill_safety.py",
+    "method": "AST-based capability analysis of every script in the skill, plus a scan of every Markdown file for instruction-surface attacks (invisible and bidirectional Unicode, directive-bearing HTML comments, encoded payloads, pipe-to-shell, credential exfiltration). The capabilities the code actually has are compared against the 'capabilities' block above; the build fails if the code exceeds its declaration.",
+    "last_run_date": "2026-09-14",
+    "last_run_result": "PASS",
+    "enforcement": "Unlike the tested_platforms rows above, this is not a point-in-time claim: it re-runs on every push and pull request, and the content digest below means the attestation stops matching if any file here is edited without re-attesting.",
+    "reproduce": "python scripts/audit_skill_safety.py --skill cross-platform-dev-scripts --strict"
+  },
+  "content_digest": "sha256:6cd2bd2b4264578c84bcf4b69cbca8e11f570c2e9f0db49186f94a37b3d9b05d"
+}

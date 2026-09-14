@@ -26,6 +26,7 @@ Every skill introduced here must follow the repository's 3 core pillars:
 
 | Skill | Status | Description |
 |---|---|---|
+| [`cross-platform-dev-scripts`](./cross-platform-dev-scripts/SKILL.md) | `🟢 Checks passing` | Scaffolds and validates turnkey, cross-platform dev setup & test scripts (`scripts/win`, `scripts/linux`) with dual-engine `uv`/`venv` fallback. |
 | [`multi-agent-docs`](./multi-agent-docs/SKILL.md) | `🟢 Checks passing` | Scaffolds & synchronizes identical `CLAUDE.md` and `AGENTS.md` across platforms. |
 | [`preflight-test-engineer`](./preflight-test-engineer/SKILL.md) | `🟢 Checks passing` | Pre-flight codebase analysis, /tests/ suite generation, and 4-stage verification for Python & TypeScript/React. |
 | [`public-repo-release-review`](./public-repo-release-review/SKILL.md) | `🟢 Checks passing` | Expert pre-flight audit for public GitHub releases: security/secret leaks, governance files, and link integrity. |

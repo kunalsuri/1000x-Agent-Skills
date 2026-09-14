@@ -21,3 +21,13 @@ Requirements:
 * Do not modify the file unless explicitly requested.
 
 ---
+
+## Prompt Name: Session Summary (Caveman Style)
+
+Based on everything learned in this session, write one short paragraph explaining:
+
+* what I asked you to do,
+* what you did,
+* and why you did it.
+
+Use caveman style: short, simple sentences, minimal words, no unnecessary detail.

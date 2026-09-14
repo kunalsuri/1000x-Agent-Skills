@@ -1,0 +1,34 @@
+{
+  "skill_name": "cross-platform-dev-scripts",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Set up scripts/win and scripts/linux so that anyone can download this repo, run a dev-setup command to create the virtual environment, and run dev-test.",
+      "expected_output": "Scaffolds scripts/win/dev-setup.ps1, scripts/win/dev-test.ps1, scripts/linux/dev-setup.sh, and scripts/linux/dev-test.sh with proper permissions and dual-engine uv/venv support.",
+      "expectations": [
+        "The scripts/linux/dev-setup.sh script exists and has strict mode enabled",
+        "The scripts/win/dev-setup.ps1 script exists and supports uv and venv fallback",
+        "The dev-test scripts support auto-bootstrapping and test filtering"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Create turnkey cross-platform developer onboarding scripts with uv acceleration and venv fallback for our project.",
+      "expected_output": "Invokes scaffold_dev_scripts.py to create the cross-platform scripts and runs validate_dev_scripts.py to verify parity and safety.",
+      "expectations": [
+        "Scaffolding script executes without errors",
+        "Scripts are isolated strictly to project-local .venv directory",
+        "Zero sudo or remote shell piping is used"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Validate that our scripts/win/dev-test.ps1 and scripts/linux/dev-test.sh have identical step parity and safe error handling.",
+      "expected_output": "Runs validate_dev_scripts.py and produces a clean parity report confirming matching steps, strict error handling, and safety invariants.",
+      "expectations": [
+        "validate_dev_scripts.py runs and confirms cross-platform step parity",
+        "Both test scripts are verified for strict error handling and isolation"
+      ]
+    }
+  ]
+}

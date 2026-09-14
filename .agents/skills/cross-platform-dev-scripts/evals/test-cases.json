@@ -1,0 +1,40 @@
+{
+  "skill_name": "cross-platform-dev-scripts",
+  "version": "1.0.0",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {
+        "id": "pos-01",
+        "prompt": "Set up scripts/win and scripts/linux so that anyone can download this repo, run a dev-setup command to create the virtual environment, and run dev-test.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-02",
+        "prompt": "Create turnkey cross-platform developer onboarding scripts with uv acceleration and venv fallback for our project.",
+        "expected_trigger": true
+      },
+      {
+        "id": "pos-03",
+        "prompt": "Validate that our scripts/win/dev-test.ps1 and scripts/linux/dev-test.sh have identical step parity and safe error handling.",
+        "expected_trigger": true
+      }
+    ],
+    "negative_prompts": [
+      {
+        "id": "neg-01",
+        "prompt": "How do I reverse a linked list in Python?",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-02",
+        "prompt": "Configure GitHub Actions CI workflow to deploy our docker container to AWS.",
+        "expected_trigger": false
+      },
+      {
+        "id": "neg-03",
+        "prompt": "Write a regex to match email addresses.",
+        "expected_trigger": false
+      }
+    ]
+  }
+}
