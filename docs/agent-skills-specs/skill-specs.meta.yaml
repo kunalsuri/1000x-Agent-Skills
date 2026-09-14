@@ -1,0 +1,210 @@
+# ==============================================================================
+# Agent Skills Specification Metadata & Maintenance Manifest
+# ==============================================================================
+# This machine-readable manifest tracks authoritative upstream specifications,
+# canonical schema definitions, repository profile extensions, and verification
+# checklists for docs/agent-skills-specs/skill-specs.md.
+# ==============================================================================
+
+schema_version: "1.1.0"
+
+document:
+  title: "Agent Skills Specification & Format Guidelines"
+  path: "docs/agent-skills-specs/skill-specs.md"
+  version: "1.1.0"
+  status: "active"
+  created_date: "2026-09-09"
+  last_updated: "2026-09-14"
+  last_audit_date: "2026-09-14"
+  maintainer: "1000x-Agent-Skills Architecture Team"
+  doc-type: "inferred-canonical by Gemini 3.8 Flash High"
+
+governance:
+  canonical_open_standard: "https://agentskills.io"
+  repository_profile: "1000x-Agent-Skills Catalog Standard"
+  validation_tools:
+    repo_validator: "scripts/validate_skills.py"
+    attestation_schema: "docs/schemas/attestation.schema.json"
+    safety_auditor: "scripts/audit_skill_safety.py"
+    upstream_validator: "skills-ref validate <skill-path>"
+    anthropic_packager: "package_skill.py (anthropics/skills)"
+
+upstream_specifications:
+  agentskills_open_spec:
+    name: "Agent Skills Open Specification"
+    authority: "Agent Skills Community & Anthropic"
+    specification_url: "https://agentskills.io/specification"
+    markdown_url: "https://agentskills.io/specification.md"
+    repository: "https://github.com/agentskills/agentskills"
+    last_verified: "2026-09-14"
+    status: "authoritative_source"
+
+  agentskills_evals:
+    name: "Agent Skills Evaluation Specification"
+    authority: "Agent Skills Community"
+    url: "https://agentskills.io/skill-creation/evaluating-skills"
+    standard_eval_file: "evals/evals.json"
+    last_verified: "2026-09-14"
+
+  agentskills_best_practices:
+    name: "Agent Skills Best Practices"
+    authority: "Agent Skills Community"
+    url: "https://agentskills.io/skill-creation/best-practices"
+    last_verified: "2026-09-14"
+
+  agentskills_clients:
+    name: "Agent Skills Client Showcase"
+    authority: "Agent Skills Community"
+    url: "https://agentskills.io/clients"
+    supported_clients_count: 37
+    key_clients:
+      - "Anthropic Claude Code"
+      - "Cursor"
+      - "OpenAI Codex / ChatGPT"
+      - "GitHub Copilot / VS Code"
+      - "Google Antigravity & Gemini CLI"
+      - "JetBrains Junie"
+      - "OpenHands"
+    last_verified: "2026-09-14"
+
+  claude_code_skills:
+    name: "Claude Code Skills Documentation"
+    authority: "Anthropic"
+    url: "https://code.claude.com/docs/en/skills"
+    last_verified: "2026-09-14"
+
+  openai_codex_skills:
+    name: "OpenAI Codex Skills Guide"
+    authority: "OpenAI"
+    url: "https://developers.openai.com/codex/skills/"
+    last_verified: "2026-09-14"
+
+  cursor_skills:
+    name: "Cursor Agent Skills Guide"
+    authority: "Cursor"
+    url: "https://cursor.com/docs/context/skills"
+    last_verified: "2026-09-14"
+
+  vscode_copilot_skills:
+    name: "Visual Studio Code Agent Customizations"
+    authority: "Microsoft & GitHub"
+    url: "https://code.visualstudio.com/docs/copilot/customization/agent-skills"
+    last_verified: "2026-09-14"
+
+canonical_schema:
+  top_level_allowed_properties:
+    - name
+    - description
+    - license
+    - compatibility
+    - metadata
+    - allowed-tools
+
+  strict_packaging_rule: >
+    Upstream packaging tools (such as package_skill.py and claude.ai skill uploads)
+    strictly reject unexpected top-level frontmatter keys. Any custom properties
+    (e.g., version, author, tags) MUST be placed under 'metadata' to maintain
+    universal cross-platform portability.
+
+  field_rules:
+    name:
+      type: "string"
+      required: true
+      min_length: 1
+      max_length: 64
+      regex: "^[a-z0-9]+(-[a-z0-9]+)*$"
+      constraints:
+        - "Lowercase alphanumeric ('a-z', '0-9') and hyphens ('-') only"
+        - "Must not start or end with a hyphen"
+        - "Must not contain consecutive hyphens"
+        - "Must strictly match the parent directory name"
+
+    description:
+      type: "string"
+      required: true
+      min_length: 1
+      max_length: 1024
+      constraints:
+        - "Non-empty string"
+        - "Must describe what the skill does and when the agent must trigger it"
+        - "Should use imperative phrasing ('Use when...') and include domain keywords"
+
+    license:
+      type: "string"
+      required: false
+      constraints:
+        - "Short license name, SPDX identifier (e.g., Apache-2.0, MIT), or reference to bundled license file"
+
+    compatibility:
+      type: "string"
+      required: false
+      max_length: 500
+      constraints:
+        - "Freeform string describing environment prerequisites, required system packages, or network access"
+        - "MUST be a string, NOT a YAML list/array"
+
+    metadata:
+      type: "map[string]string"
+      required: false
+      constraints:
+        - "Key-value mapping where keys and values are strings"
+        - "Designated official location for author, version, tags, and client-specific attributes"
+
+    allowed-tools:
+      type: "string"
+      required: false
+      format: "space-separated string"
+      status: "experimental"
+      constraints:
+        - "Space-separated string of pre-approved tool patterns (e.g. 'Bash(git:*) Bash(jq:*) Read')"
+        - "Note: Claude Code also accepts YAML list format for local skills"
+
+directory_structure_standard:
+  required_files:
+    - path: "SKILL.md"
+      description: "Metadata frontmatter followed by procedural markdown workflow"
+  optional_directories:
+    - path: "scripts/"
+      description: "Executable code (Bash, Python, JS) executed on-demand by agent"
+    - path: "references/"
+      description: "Deep documentation, API schemas, and reference material loaded on-demand"
+    - path: "assets/"
+      description: "Static resources (templates, images, lookup tables, diagrams)"
+    - path: "evals/"
+      description: "Standard evaluation datasets (evals/evals.json)"
+
+repository_profile_extensions:
+  attestation:
+    file: "attestation.json"
+    schema: "docs/schemas/attestation.schema.json"
+    purpose: "Cryptographic content-binding, capability boundary declaration, and multi-model test proof"
+    is_universal_standard: false
+    scope: "1000x-Agent-Skills internal governance"
+  eval_harness:
+    file: "evals/test-cases.json"
+    validator: "scripts/validate_skills.py"
+    purpose: "Trigger evaluation test harness for automated repository validation"
+    upstream_standard_counterpart: "evals/evals.json"
+  catalog_hierarchy:
+    pattern: "skills/<category>/<skill-name>/"
+    categories:
+      - "anthropic"
+      - "custom"
+      - "google"
+    purpose: "Catalog organization and provenance isolation across upstream sources"
+
+verification_checklist:
+  - id: "CHK-01"
+    check: "Validate that SKILL.md frontmatter adheres to the 6 canonical top-level fields or isolates extensions to metadata."
+  - id: "CHK-02"
+    check: "Ensure compatibility field is a string <= 500 characters, not a list."
+  - id: "CHK-03"
+    check: "Ensure skill name strictly matches ^[a-z0-9]+(-[a-z0-9]+)*$ and matches directory name."
+  - id: "CHK-04"
+    check: "Verify SKILL.md body line count is under 500 lines."
+  - id: "CHK-05"
+    check: "Verify frontmatter estimated token footprint is <= 150 tokens."
+  - id: "CHK-06"
+    check: "Confirm externalized code and templates use scripts/ and assets/ conventions."
+  - id: "CHK-07"
+    check: "Ensure attestation.json and evals/test-cases.json are maintained for repository catalog skills."
