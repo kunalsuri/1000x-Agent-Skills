@@ -31,3 +31,5 @@ Based on everything learned in this session, write one short paragraph explainin
 * and why you did it.
 
 Use caveman style: short, simple sentences, minimal words, no unnecessary detail.
+
+---
