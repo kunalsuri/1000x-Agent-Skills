@@ -230,3 +230,24 @@ class TestThisRepository:
         result = audit.audit_markdown_file(repo_root / "README.md", repo_root)
         assert result["passed"], (result["score"], result["errors"],
                                   result["recommendations"])
+
+
+class TestEmojiCounting:
+    """count_emoji replaced a regex character class (CodeQL false positive);
+    it must count exactly the same characters the class matched."""
+
+    OLD_CLASS = ("[" "\U0001F300-\U0001FAFF" "\U00002600-\U000027BF" "\U0001F000-\U0001F2FF"
+                 "\U00002B00-\U00002BFF" "\U0000FE0F" "]")
+
+    def test_identical_to_the_former_regex_on_every_code_point(self, audit):
+        import re
+        old = re.compile(self.OLD_CLASS)
+        for cp in range(0x110000):
+            if 0xD800 <= cp <= 0xDFFF:
+                continue
+            ch = chr(cp)
+            assert audit.count_emoji(ch) == len(old.findall(ch)), hex(cp)
+
+    def test_counts_emoji_and_ignores_text(self, audit):
+        assert audit.count_emoji("🚀 Fast ✨ and ✅ done") == 3
+        assert audit.count_emoji("plain text �") == 0

@@ -39,10 +39,23 @@ SELF_AWARDED_BADGE_RE = re.compile(
 )
 BADGE_RE = re.compile(r"!\[[^\]]*\]\((https?://[^)]*(?:shields\.io|badge)[^)]*)\)",
                       re.IGNORECASE)
-EMOJI_RE = re.compile(
-    "[" "\U0001F300-\U0001FAFF" "\U00002600-\U000027BF" "\U0001F000-\U0001F2FF"
-    "\U00002B00-\U00002BFF" "\U0000FE0F" "]"
+# Emoji blocks counted as ornament, as inclusive code-point ranges. Kept as
+# plain ranges rather than a regex character class: CodeQL reads astral-plane
+# ranges in a class as UTF-16 surrogates and reports a false "overly
+# permissive range" (code-scanning alerts 7 and 10). Same set, no regex.
+EMOJI_RANGES = (
+    (0x1F300, 0x1FAFF),  # pictographs, emoticons, transport, supplemental symbols
+    (0x2600, 0x27BF),    # miscellaneous symbols and dingbats
+    (0x1F000, 0x1F2FF),  # mahjong, domino, playing cards, enclosed supplements
+    (0x2B00, 0x2BFF),    # miscellaneous symbols and arrows
+    (0xFE0F, 0xFE0F),    # variation selector-16 (emoji presentation)
 )
+
+
+def count_emoji(text: str) -> int:
+    """Number of characters in text that fall in EMOJI_RANGES."""
+    return sum(1 for ch in text
+               if any(lo <= ord(ch) <= hi for lo, hi in EMOJI_RANGES))
 FENCE_RE = re.compile(r"^```([A-Za-z0-9_+-]*)\s*$")
 
 
@@ -199,7 +212,7 @@ def audit_markdown_file(file_path: Path, workspace_root: Path) -> dict:
     br_count = len(re.findall(r'<br\s*/?>', content, re.IGNORECASE))
     badges = BADGE_RE.findall(content)
     self_awarded = SELF_AWARDED_BADGE_RE.findall(content)
-    emoji_count = len(EMOJI_RE.findall(content))
+    emoji_count = count_emoji(content)
     emoji_density = (emoji_count / max(len(lines), 1)) * 100
 
     restraint_pts = 0
