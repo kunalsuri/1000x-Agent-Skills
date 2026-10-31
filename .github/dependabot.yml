@@ -4,12 +4,21 @@ updates:
   # means a compromised tag would be picked up silently. Dependabot keeps the
   # references current and surfaces each change as a reviewable pull request;
   # moving to full SHA pinning is the stronger next step.
+  #
+  # Updates are grouped so each ecosystem produces at most one PR a week
+  # instead of one per package. Pins Dependabot cannot see (SKILLS_REF_SHA and
+  # CLAUDE_CODE_VERSION in ci.yml) are covered by scripts/check_updates.py and
+  # the weekly-maintenance workflow, which also tests the suite against the
+  # latest dependencies before a bump lands.
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
     commit-message:
       prefix: "ci"
+    groups:
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: pip
     directory: "/"
@@ -17,3 +26,6 @@ updates:
       interval: weekly
     commit-message:
       prefix: "deps"
+    groups:
+      python-test-deps:
+        patterns: ["*"]

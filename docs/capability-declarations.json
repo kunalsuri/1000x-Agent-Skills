@@ -40,6 +40,16 @@
         "filesystem": "workspace-delete"
       },
       "rationale": "Copies skills/<skill>/ into .agents/skills/<skill>/ and removes mirror directories with no canonical source. Writes and deletes only inside the repository's .agents/skills/. Dry run by default; --write applies."
+    },
+    {
+      "path": "scripts/check_updates.py",
+      "capabilities": {
+        "network": "outbound",
+        "process_execution": "none",
+        "dynamic_code_execution": "none",
+        "filesystem": "workspace-write"
+      },
+      "rationale": "Makes read-only HTTPS GETs to pypi.org, api.github.com and registry.npmjs.org to find the latest version of each pin. With --write it rewrites version strings in requirements-dev.txt and .github/workflows/*.yml, and nothing else. Every fetched value must fully match a strict version or SHA pattern before it is compared or written, because these files are executed by CI. Dry run by default."
     }
   ]
 }

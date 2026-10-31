@@ -1,0 +1,113 @@
+name: Weekly maintenance
+
+# Runs once a week and on demand. It changes nothing in the repository: it
+# reports. A failed run is the signal (GitHub emails the repository owner
+# about failed scheduled runs). To act on it locally:
+#
+#   python scripts/check_updates.py --write   # bump every pin
+#   python -m pytest                          # prove nothing broke
+#   git commit -am "deps: weekly update" && open a PR
+#
+# Merging that PR makes Dependabot close its own now-redundant PRs.
+#
+# Note: GitHub disables scheduled workflows after 60 days without repository
+# activity. Re-enable it from the Actions tab if that happens.
+
+on:
+  schedule:
+    - cron: "23 4 * * 1"   # Mondays 04:23 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-maintenance
+  cancel-in-progress: true
+
+jobs:
+  # Every version pin vs. the latest release: requirements-dev.txt, the
+  # actions in .github/workflows, and the two pins Dependabot cannot see
+  # (SKILLS_REF_SHA and CLAUDE_CODE_VERSION in ci.yml).
+  pins:
+    name: Version pins are current
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check every pin against its registry
+        env:
+          # Read-only token, used only to raise the GitHub API rate limit.
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          # GitHub runs this with `bash -e -o pipefail`: capture the exit code
+          # explicitly so the summary is written even when updates exist.
+          status=0
+          python scripts/check_updates.py > report.txt 2>&1 || status=$?
+          cat report.txt
+          {
+            echo "## Version pins"
+            echo '```text'
+            cat report.txt
+            echo '```'
+            echo "Fix: \`python scripts/check_updates.py --write && python -m pytest\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+  # Runs the full CI gate with the LATEST versions of the test dependencies,
+  # not the pinned ones. A red canary means the next version bump will break
+  # something: fix it before merging that bump.
+  canary:
+    name: Test suite on latest dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install latest test dependencies (unpinned on purpose)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade pytest pytest-cov jsonschema
+          python -m pip list | grep -Ei "pytest|jsonschema"
+      - name: Safety audit
+        run: python scripts/audit_skill_safety.py --strict
+      - name: Content digests
+        run: python scripts/skill_digest.py --check
+      - name: Skill validator
+        run: python scripts/validate_skills.py
+      - name: Test suite
+        run: python -m pytest -q --cov=scripts --cov=skills --cov=utils --cov-fail-under=60
+
+  # docs/agent-skills-specs tracks upstream docs that change. The validator
+  # only warns about staleness on every push; here it fails, once a week, so
+  # the warning cannot be ignored indefinitely.
+  spec-freshness:
+    name: Spec summary re-verified within 90 days
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Check last_verified
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          from validate_skills import audit_spec_freshness
+          warnings = audit_spec_freshness(Path("docs/agent-skills-specs/skill-specs.meta.yaml"))
+          for w in warnings:
+              print("::error::" + w)
+          sys.exit(1 if warnings else 0)
+          PY
