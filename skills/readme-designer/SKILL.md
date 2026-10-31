@@ -1,12 +1,12 @@
 ---
 name: readme-designer
-version: 1.0.0
-author: Kunal Suri <kunal.suri@cea.fr>
-description: Transform, modernize, and design world-class repository READMEs and documentation for maximum visual impact, readability, and engagement. Applies structured spacing with <br/>, thematic dividers ---, bold hierarchy, comparison matrices, Mermaid flowcharts, ASCII art frames, shields/badges, and GitHub alert callouts. Use when creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, repository documentation, or landing page.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
-tags: [readme, documentation, modern-design, aesthetics, formatting, markdown, visual-hierarchy, open-source]
+description: Redesigns and audits a project README or landing-page documentation so newcomers quickly understand, install and try the project, with clear hierarchy, comparison tables, diagrams, badges and callouts. Use when the user wants a README created, rewritten, modernised, made more readable or more attractive, or says the docs are confusing or ugly, even if they do not mention Markdown.
 license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri <kunal.suri@cea.fr>
+  version: "1.0.0"
+  tags: readme, documentation, modern-design, aesthetics, formatting, markdown, visual-hierarchy, open-source
 ---
 
 # 🎨 README & Documentation Designer
@@ -72,7 +72,7 @@ Every modernized README is built upon six visual engineering principles:
 Analyze the target `README.md` using the built-in diagnostic CLI:
 
 ```bash
-python skills/custom/readme-designer/scripts/audit_readme.py --target README.md
+python skills/readme-designer/scripts/audit_readme.py --target README.md
 ```
 
 The diagnostic script evaluates:
@@ -253,7 +253,7 @@ project-root/
 If starting a brand-new repository with no existing README, use the scaffolding script:
 
 ```bash
-python skills/custom/readme-designer/scripts/scaffold_readme.py \
+python skills/readme-designer/scripts/scaffold_readme.py \
   --name "Project Name" \
   --tagline "The Ultimate AI Toolchain" \
   --output README.md
@@ -266,5 +266,5 @@ python skills/custom/readme-designer/scripts/scaffold_readme.py \
 Run the validation suite to ensure a perfect **100/100 A+** design score and zero broken links:
 
 ```bash
-python skills/custom/readme-designer/scripts/audit_readme.py --target README.md --strict
+python skills/readme-designer/scripts/audit_readme.py --target README.md --strict
 ```

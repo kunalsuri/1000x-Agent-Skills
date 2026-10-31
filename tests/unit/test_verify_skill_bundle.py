@@ -42,7 +42,7 @@ def _can_symlink() -> bool:
 CAN_SYMLINK = _can_symlink()
 SYMLINK_SKIP = "Symlink creation not permitted in this environment"
 
-SCRIPT = "skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py"
+SCRIPT = "skills/third-party-skill-verifier/scripts/verify_skill_bundle.py"
 
 BENIGN_SKILL_MD = """---
 name: sample-skill

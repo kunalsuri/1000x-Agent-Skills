@@ -12,7 +12,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def sync(load_script):
-    return load_script("skills/custom/multi-agent-docs/scripts/validate_sync.py")
+    return load_script("skills/multi-agent-docs/scripts/validate_sync.py")
 
 
 class TestCommandExtraction:

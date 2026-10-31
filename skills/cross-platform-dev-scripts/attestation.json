@@ -47,5 +47,5 @@
     "enforcement": "Unlike the tested_platforms rows above, this is not a point-in-time claim: it re-runs on every push and pull request, and the content digest below means the attestation stops matching if any file here is edited without re-attesting.",
     "reproduce": "python scripts/audit_skill_safety.py --skill cross-platform-dev-scripts --strict"
   },
-  "content_digest": "sha256:6cd2bd2b4264578c84bcf4b69cbca8e11f570c2e9f0db49186f94a37b3d9b05d"
+  "content_digest": "sha256:a475ad1bedb2885dc2e594f3e8623c5f32c0281da6ad51b15a68747ba3b0184c"
 }

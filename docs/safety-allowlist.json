@@ -5,49 +5,49 @@
       "path": ".agents/skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "2d16b3eeb52f3c43",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "3fedc05cbf3ed70c",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "8f577f6e78aaca29",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "d25b2630355465e3",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
       "fingerprint": "fd020f85417d46c7",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/SKILL.md, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
       "fingerprint": "00c5dd8cfda2cdb3",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
       "fingerprint": "16039232463473bf",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": ".agents/skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
       "fingerprint": "bb2132debd43e880",
-      "reason": "Byte-identical mirror of skills/custom/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
+      "reason": "Byte-identical mirror of skills/saas-app-builder/scripts/audit_scaffold.py, which carries the reviewed exemption for this same content. Mirror parity is enforced by tests/unit/test_agents_mirror_parity.py, so this copy cannot diverge from the reviewed original without failing CI."
     },
     {
       "path": "scripts/install_to_agent.py",
@@ -62,94 +62,52 @@
       "reason": "Reviewed 2026-08-31: the deliberate optional `import jsonschema`, guarded by try/except with a documented stdlib fallback so the no-dependency CI job still validates. The finding is correct -- jsonschema's capabilities are not derivable from this source -- and is accepted rather than removed because the alternative is hand-rolling JSON Schema validation. The package is used for one thing, validating attestation.json against docs/schemas/, and it is pinned in requirements-dev.txt where it can be reviewed and updated deliberately."
     },
     {
-      "path": "skills/anthropic/mcp-builder",
-      "check": "CAP-OVERDECLARED",
-      "fingerprint": "b3a52c72f0d195e2",
-      "reason": "Deliberate over-declaration on a vendored skill. The auditor derives this capability as 'none' because it is exercised through a third-party SDK rather than a module in its import table: scripts/evaluation.py imports the `anthropic` client and calls the Claude API, and scripts/connections.py calls stdio_client(StdioServerParameters(command=...)), which launches an arbitrary command as a child process. The declaration in attestation.json states what the code does; the auditor states what it can prove from imports alone. Where those differ on vendored code, the stronger and true value is declared and pinned here rather than silently narrowed to whatever turns the build green."
-    },
-    {
-      "path": "skills/anthropic/mcp-builder",
-      "check": "CAP-OVERDECLARED",
-      "fingerprint": "bac97b9487ea59c7",
-      "reason": "Second of the two deliberate over-declarations on this vendored skill; see the entry above for the full reasoning. Both are recorded separately so that if either capability later becomes derivable -- because the auditor's tables grow, or because the vendored code stops using the SDK -- that one exemption stops applying on its own and resurfaces for review."
-    },
-    {
-      "path": "skills/anthropic/mcp-builder/scripts/connections.py",
-      "check": "CAP-UNPROVEN",
-      "fingerprint": "4b59f8e45b1d7b34",
-      "reason": "Reviewed 2026-08-31: `from mcp...` in vendored upstream code. This is the import the whole CAP-UNPROVEN check was added for. It resolves to stdio_client(StdioServerParameters(command=..., args=..., env=...)), which launches an arbitrary command as a child process -- a capability no import table can see. attestation.json therefore declares process_execution: subprocess and network: outbound rather than the 'none' the AST would otherwise have reported. Suppressed because the capability it hides is now declared, not because it was judged harmless."
-    },
-    {
-      "path": "skills/anthropic/mcp-builder/scripts/evaluation.py",
-      "check": "CAP-UNPROVEN",
-      "fingerprint": "5cb16088223fbaf6",
-      "reason": "Reviewed 2026-08-31: `from anthropic import Anthropic` in vendored upstream code, which calls the Claude API over the network. Same disposition as the connections.py entry above: the capability is undetectable structurally, so it is declared in attestation.json as network: outbound and the finding is pinned here. Note that scripts/requirements.txt pulls both `anthropic` and `mcp` from PyPI and nothing in this repository has audited those packages -- running this skill's evaluation harness runs them."
-    },
-    {
-      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
-      "check": "PY-OBFUSCATION",
-      "fingerprint": "1c530155fd97159b",
-      "reason": "Reviewed 2026-08-31: four identical `base64.b64encode(raw).decode(\"ascii\")` call sites (lines 167, 179, 190, 202), which share one fingerprint because the line text is identical. Each reads a local image, PDF or spreadsheet produced by an eval run and encodes it into a data: URI so the generated review page is a single self-contained HTML file. Encoding local output for display is the opposite of the pattern this check exists to catch; there is no b64decode anywhere in the bundle."
-    },
-    {
-      "path": "skills/anthropic/skill-creator/eval-viewer/generate_review.py",
-      "check": "PY-OBFUSCATION",
-      "fingerprint": "c57bdd786c5db31c",
-      "reason": "Reviewed 2026-08-31: the `import base64` line in vendored upstream code. The module is used only to ENCODE local files, never to decode a payload -- see the entry below for the four call sites. Flagged because the check matches the import itself, which is correct behaviour for a check pointed at strangers' code."
-    },
-    {
-      "path": "skills/anthropic/skill-creator/scripts/quick_validate.py",
-      "check": "CAP-UNPROVEN",
-      "fingerprint": "4cbce242f4e6abc8",
-      "reason": "Reviewed 2026-08-31: `import yaml` (PyYAML) in vendored upstream code, used at line 77 to parse SKILL.md frontmatter. Read before accepting: it calls yaml.safe_load, not yaml.load, so the loader cannot construct arbitrary Python objects from the document -- which is the specific reason an unproven YAML dependency is worth reading rather than waving through. The capability remains underivable and the finding stands as the record of that."
-    },
-    {
-      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "path": "skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
-      "fingerprint": "13a3748e396f23fa",
-      "reason": "Reviewed 2026-08-30: a `curl` auth smoke-test against http://localhost:3031 using the obviously-fake credential \"wrong\". Localhost only; nothing leaves the machine."
+      "fingerprint": "ef0ad00e1556fe49",
+      "reason": "Reviewed 2026-08-30: a `curl` auth smoke-test against http://localhost:3031 using the obviously-fake credential \"wrong\". Localhost only; nothing leaves the machine. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "path": "skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
-      "fingerprint": "23d5fb02f069f800",
-      "reason": "Reviewed 2026-08-30: guidance requiring `password` to be stripped from every server response. This is an anti-exfiltration instruction, the opposite of the pattern being matched."
+      "fingerprint": "dfa282c32bce88b7",
+      "reason": "Reviewed 2026-08-30: guidance requiring `password` to be stripped from every server response. This is an anti-exfiltration instruction, the opposite of the pattern being matched. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "path": "skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
-      "fingerprint": "500c0a3d6c8ed23d",
-      "reason": "Reviewed 2026-08-30: guidance requiring bcrypt hashing and comparison on login, documenting a CVE-shaped bug fixed in v1.5.0. Defensive instruction, no data movement."
+      "fingerprint": "951ccc1845a0a439",
+      "reason": "Reviewed 2026-08-30: guidance requiring bcrypt hashing and comparison on login, documenting a CVE-shaped bug fixed in v1.5.0. Defensive instruction, no data movement. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "path": "skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
-      "fingerprint": "a2efc89131a35b6c",
-      "reason": "Reviewed 2026-08-30: prose describing the scaffold's own /api/auth/me endpoints. Flagged only because the 2-line window reaches the password guidance below it."
+      "fingerprint": "125b84a334047bba",
+      "reason": "Reviewed 2026-08-30: prose describing the scaffold's own /api/auth/me endpoints. Flagged only because the 2-line window reaches the password guidance below it. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/SKILL.md",
+      "path": "skills/saas-app-builder/SKILL.md",
       "check": "MD-CREDENTIAL-EXFIL",
-      "fingerprint": "b9ba804801b8f42a",
-      "reason": "Reviewed 2026-08-30: the paired localhost auth smoke-test using the seeded demo credential \"password123\". Localhost only; nothing leaves the machine."
+      "fingerprint": "5d49a719e97b6328",
+      "reason": "Reviewed 2026-08-30: the paired localhost auth smoke-test using the seeded demo credential \"password123\". Localhost only; nothing leaves the machine. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "path": "skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
-      "fingerprint": "43dc3fd18000ad1d",
-      "reason": "Reviewed 2026-08-30: the literal detection pattern `re.compile(r\"fromCharCode\")` inside the detector's own pattern table."
+      "fingerprint": "f432ab3654e317df",
+      "reason": "Reviewed 2026-08-30: the literal detection pattern `re.compile(r\"fromCharCode\")` inside the detector's own pattern table. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "path": "skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
-      "fingerprint": "4501c2cf05ed6b97",
-      "reason": "Reviewed 2026-08-30: the detector's own report label listing the tokens it scans for."
+      "fingerprint": "7349372bc30dbaf7",
+      "reason": "Reviewed 2026-08-30: the detector's own report label listing the tokens it scans for. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     },
     {
-      "path": "skills/custom/saas-app-builder/scripts/audit_scaffold.py",
+      "path": "skills/saas-app-builder/scripts/audit_scaffold.py",
       "check": "PY-OBFUSCATION",
-      "fingerprint": "a6db33693a7dd6e8",
-      "reason": "Reviewed 2026-08-30: audit_scaffold.py is itself an obfuscation detector; this is its docstring naming the token it searches for. Self-reference, not a payload."
+      "fingerprint": "bc29d9994ebdef6a",
+      "reason": "Reviewed 2026-08-30: audit_scaffold.py is itself an obfuscation detector; this is its docstring naming the token it searches for. Self-reference, not a payload. Re-pinned 2026-10-31 after the move from skills/custom/ to skills/: the fingerprint hashes the path, and the flagged text was confirmed byte-identical to the reviewed text at the old path before re-pinning."
     }
   ]
 }

@@ -132,7 +132,7 @@ class TestRepositoryState:
         assert not failures, "\n".join(failures)
 
     def test_mirror_digests_match_their_canonical_source(self, digest, repo_root):
-        for canonical in sorted((repo_root / "skills" / "custom").iterdir()):
+        for canonical in sorted((repo_root / "skills").iterdir()):
             mirror = repo_root / ".agents" / "skills" / canonical.name
             if not mirror.exists():
                 continue

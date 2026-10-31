@@ -6,18 +6,23 @@
 # checklists for docs/agent-skills-specs/skill-specs.md.
 # ==============================================================================
 
-schema_version: "1.1.0"
+schema_version: "1.2.0"
 
 document:
   title: "Agent Skills Specification & Format Guidelines"
   path: "docs/agent-skills-specs/skill-specs.md"
-  version: "1.1.0"
+  version: "1.2.0"
   status: "active"
   created_date: "2026-09-09"
-  last_updated: "2026-09-14"
-  last_audit_date: "2026-09-14"
-  maintainer: "1000x-Agent-Skills Architecture Team"
-  doc-type: "inferred-canonical by Gemini 3.8 Flash High"
+  last_updated: "2026-10-31"
+  # Read by scripts/validate_skills.py (audit_spec_freshness). It warns when
+  # this date is more than review_interval_days old. Bump it only after
+  # actually re-checking the sources below, never just to silence the warning.
+  last_verified: "2026-10-31"
+  review_interval_days: 90
+  next_review_due: "2027-01-29"
+  maintainer: "Kunal Suri"
+  doc-type: "working summary of upstream sources; upstream wins on conflict"
 
 governance:
   canonical_open_standard: "https://agentskills.io"
@@ -34,9 +39,10 @@ upstream_specifications:
     name: "Agent Skills Open Specification"
     authority: "Agent Skills Community & Anthropic"
     specification_url: "https://agentskills.io/specification"
-    markdown_url: "https://agentskills.io/specification.md"
+    source_file: "https://raw.githubusercontent.com/agentskills/agentskills/main/docs/specification.mdx"
     repository: "https://github.com/agentskills/agentskills"
-    last_verified: "2026-09-14"
+    last_verified: "2026-10-31"
+    verification_note: "agentskills.io host unreachable from audit sandbox; read from GitHub source instead"
     status: "authoritative_source"
 
   agentskills_evals:
@@ -44,19 +50,21 @@ upstream_specifications:
     authority: "Agent Skills Community"
     url: "https://agentskills.io/skill-creation/evaluating-skills"
     standard_eval_file: "evals/evals.json"
-    last_verified: "2026-09-14"
+    eval_case_fields: ["prompt", "expected_output", "files", "assertions"]
+    trigger_eval_fields: ["query", "should_trigger"]
+    last_verified: "2026-10-31"
 
   agentskills_best_practices:
     name: "Agent Skills Best Practices"
     authority: "Agent Skills Community"
     url: "https://agentskills.io/skill-creation/best-practices"
-    last_verified: "2026-09-14"
+    last_verified: "2026-10-31"
 
   agentskills_clients:
     name: "Agent Skills Client Showcase"
     authority: "Agent Skills Community"
     url: "https://agentskills.io/clients"
-    supported_clients_count: 37
+    supported_clients_count: null  # previously 37; not re-counted on 2026-10-31
     key_clients:
       - "Anthropic Claude Code"
       - "Cursor"
@@ -65,25 +73,48 @@ upstream_specifications:
       - "Google Antigravity & Gemini CLI"
       - "JetBrains Junie"
       - "OpenHands"
-    last_verified: "2026-09-14"
+    last_verified: "2026-09-14"  # not re-checked on 2026-10-31
 
   claude_code_skills:
     name: "Claude Code Skills Documentation"
     authority: "Anthropic"
     url: "https://code.claude.com/docs/en/skills"
-    last_verified: "2026-09-14"
+    last_verified: "2026-10-31"
 
   openai_codex_skills:
     name: "OpenAI Codex Skills Guide"
     authority: "OpenAI"
     url: "https://developers.openai.com/codex/skills/"
     last_verified: "2026-09-14"
+    status_2026_10_31: "UNVERIFIED: host unreachable. openai/skills repo now marked deprecated in favour of openai/plugins."
 
   cursor_skills:
     name: "Cursor Agent Skills Guide"
     authority: "Cursor"
     url: "https://cursor.com/docs/context/skills"
     last_verified: "2026-09-14"
+    status_2026_10_31: "UNVERIFIED: host unreachable."
+
+  claude_authoring_best_practices:
+    name: "Skill authoring best practices"
+    authority: "Anthropic"
+    url: "https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices"
+    last_verified: "2026-10-31"
+
+  claude_code_plugins:
+    name: "Claude Code plugins and marketplaces"
+    authority: "Anthropic"
+    url: "https://code.claude.com/docs/en/plugin-marketplaces"
+    repo_manifest: ".claude-plugin/marketplace.json"
+    validator: "claude plugin validate ."
+    last_verified: "2026-10-31"
+
+  skills_cli:
+    name: "skills CLI (skills.sh)"
+    authority: "Vercel Labs"
+    url: "https://github.com/vercel-labs/skills"
+    install: "npx skills add kunalsuri/1000x-Agent-Skills"
+    last_verified: "2026-10-31"
 
   vscode_copilot_skills:
     name: "Visual Studio Code Agent Customizations"
@@ -186,12 +217,9 @@ repository_profile_extensions:
     purpose: "Trigger evaluation test harness for automated repository validation"
     upstream_standard_counterpart: "evals/evals.json"
   catalog_hierarchy:
-    pattern: "skills/<category>/<skill-name>/"
-    categories:
-      - "anthropic"
-      - "custom"
-      - "google"
-    purpose: "Catalog organization and provenance isolation across upstream sources"
+    pattern: "skills/<skill-name>/"
+    changed: "2026-10-31: flattened from skills/<category>/<skill-name>/ to match anthropics/skills, the Claude Code plugin layout and npx skills discovery"
+    mirror: ".agents/skills/<skill-name>/ (byte-identical; scripts/sync_mirror.py)"
 
 verification_checklist:
   - id: "CHK-01"
@@ -203,7 +231,7 @@ verification_checklist:
   - id: "CHK-04"
     check: "Verify SKILL.md body line count is under 500 lines."
   - id: "CHK-05"
-    check: "Verify frontmatter estimated token footprint is <= 150 tokens."
+    check: "Verify frontmatter estimated token footprint is <= 150 tokens (repository heuristic, not an upstream rule)."
   - id: "CHK-06"
     check: "Confirm externalized code and templates use scripts/ and assets/ conventions."
   - id: "CHK-07"

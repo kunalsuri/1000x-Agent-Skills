@@ -1,6 +1,11 @@
 ---
 name: lessons-learnt
 description: Captures the important, reusable knowledge from the current session (decisions, rules we now follow, what failed and why, facts gathered with sources) as dated markdown files in a `lessons-learnt/` folder, written so both an AI agent and a human can use them. Use when the user asks to "write the lessons learnt", "record what we learned", "add this session to lessons-learnt", or at the end of a long working session.
+license: Apache-2.0
+compatibility: Instructions only; no scripts. Works in any Agent Skills client.
+metadata:
+  author: Kunal Suri
+  version: "1.0.0"
 ---
 
 # lessons-learnt

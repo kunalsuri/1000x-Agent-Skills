@@ -72,8 +72,8 @@
     "obfuscation_smells_found": [],
     "external_urls_found": 10,
     "external_urls_note": "All 10 are inert strings inside generated-app templates, fetched later by a browser running the generated app, not calls scaffold_saas.py itself makes: 2 Google Fonts URLs (fonts.googleapis.com, one bare + one full stylesheet link), 1 fonts.gstatic.com, 1 Unsplash demo-avatar image, 1 the SVG XML namespace URI, 1 ui.shadcn.com's components.json schema reference, and 4 localhost references (http://localhost:${PORT} and http://localhost:3031 in template strings, including one caught mid-Markdown-link by the URL regex) that are dev-instructions text, not fetches at all. The script makes zero network calls.",
-    "reproduce": "python skills/custom/saas-app-builder/scripts/audit_scaffold.py skills/custom/saas-app-builder/scripts/scaffold_saas.py",
+    "reproduce": "python skills/saas-app-builder/scripts/audit_scaffold.py skills/saas-app-builder/scripts/scaffold_saas.py",
     "note": "This is a point-in-time result, not a permanent guarantee. Re-run it yourself after any update to scaffold_saas.py, and on any copy of this skill before trusting it \u2014 don't rely on this field surviving an edit nobody re-attested."
   },
-  "content_digest": "sha256:540eaed05ca00caba3579f2a899b6b5c60177e7cd329a0235646af9b277ee871"
+  "content_digest": "sha256:bbe79941d0d45700919f5fff610067a302d5c6b29a7d5cf91959c6845c164dc3"
 }

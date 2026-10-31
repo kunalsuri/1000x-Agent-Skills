@@ -17,7 +17,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def scaffolder(load_script):
-    return load_script("skills/custom/preflight-test-engineer/scripts/scaffold_tests.py")
+    return load_script("skills/preflight-test-engineer/scripts/scaffold_tests.py")
 
 
 @pytest.fixture

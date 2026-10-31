@@ -1,12 +1,12 @@
 ---
 name: multi-agent-docs
-version: 1.1.0
-author: Kunal Suri <kunal.suri@cea.fr>
 description: Deterministically scaffolds and synchronizes CLAUDE.md, AGENTS.md, .claude/, and .agents/ using automated manifest inspection scripts followed by semantic LLM refinement. Use when configuring a repository for multi-agent workflows (Claude Code, Antigravity, Cursor, Codex) or when resolving instruction drift.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
-tags: [multi-agent, claude-md, agents-md, setup, sync, deterministic]
 license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri <kunal.suri@cea.fr>
+  version: "1.1.0"
+  tags: multi-agent, claude-md, agents-md, setup, sync, deterministic
 ---
 
 # Multi-Agent Project Docs & Conventions

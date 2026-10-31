@@ -1,0 +1,31 @@
+{
+  "skill_name": "lessons-learnt",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "We just spent the session fixing a build that broke because skills moved from skills/custom/ to skills/. The validator assumed a category level, CI pointed at old paths, and the .agents mirror drifted. Write the lessons learnt.",
+      "expected_output": "One or more dated files under docs/lessons-learnt/ named YYYY-MM-DD_HHMM_<kind>_<topic>.md, plus an updated README.md index.",
+      "files": [],
+      "assertions": [
+        "Every new file name matches YYYY-MM-DD_HHMM_(session|failures|recon)_<topic>.md",
+        "Each new file has a 'Written:' line and a 'Read when:' sentence",
+        "The failures file lists at least one rule phrased as an imperative with a re-check command",
+        "docs/lessons-learnt/README.md index has one new row per new file, newest first",
+        "No existing dated file was modified",
+        "The agent did not commit or push"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "record what we learned today about the agentskills.io spec: version and author must go under metadata, compatibility is a string, and agentskills.io itself was unreachable from the sandbox so we read the spec from GitHub raw instead",
+      "expected_output": "A recon file whose facts each carry a source URL and a Checked date, and which states what could not be verified directly.",
+      "files": [],
+      "assertions": [
+        "A file with kind 'recon' is written",
+        "Each fact line carries 'Source:' and 'Checked:'",
+        "The unreachable host is recorded under Open items or as not verified, not silently dropped",
+        "No secrets, tokens or private URLs appear in the file"
+      ]
+    }
+  ]
+}

@@ -27,7 +27,7 @@ pytestmark = pytest.mark.unit
 
 ROOT = Path(__file__).resolve().parents[2]
 AUDITOR = ROOT / "scripts" / "audit_skill_safety.py"
-VERIFIER = (ROOT / "skills" / "custom" / "third-party-skill-verifier"
+VERIFIER = (ROOT / "skills" / "third-party-skill-verifier"
             / "scripts" / "verify_skill_bundle.py")
 
 
@@ -67,7 +67,7 @@ class TestDetectionTablesNeverWeaken:
         assert missing == set(), (
             f"{table} in the verifier is missing entries the auditor has: "
             f"{sorted(missing)}. Add them to "
-            f"skills/custom/third-party-skill-verifier/scripts/verify_skill_bundle.py "
+            f"skills/third-party-skill-verifier/scripts/verify_skill_bundle.py "
             f"-- a stranger's skill must never be held to a lower standard "
             f"than this repository's own.")
 

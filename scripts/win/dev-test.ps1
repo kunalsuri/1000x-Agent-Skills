@@ -146,7 +146,7 @@ if ($K) {
     Invoke-Step -Name "Skill Doctor validator" -Exe $VenvPy `
         -StepArgs @("scripts/validate_skills.py")
     Invoke-Step -Name "Pre-flight release audit" -Exe $VenvPy `
-        -StepArgs @("skills/custom/public-repo-release-review/scripts/audit_repo.py", "--target", ".", "--strict")
+        -StepArgs @("skills/public-repo-release-review/scripts/audit_repo.py", "--target", ".", "--strict")
     Invoke-Step -Name "Pytest suite (coverage >= 60%)" -Exe $VenvPy `
         -StepArgs @("-m", "pytest", "-q", "--cov=scripts", "--cov=skills", "--cov=utils",
                     "--cov-report=term-missing", "--cov-fail-under=60")

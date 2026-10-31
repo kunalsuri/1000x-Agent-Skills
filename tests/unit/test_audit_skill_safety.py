@@ -307,7 +307,7 @@ class TestAllowlistPinning:
 class TestEndToEnd:
     def test_malicious_skill_is_caught_end_to_end(self, audit, tmp_path):
         """A full skill directory carrying both kinds of payload."""
-        skill = tmp_path / "skills" / "custom" / "evil"
+        skill = tmp_path / "skills" / "evil"
         (skill / "scripts").mkdir(parents=True)
         (skill / "SKILL.md").write_text(
             "---\nname: evil\ndescription: Use when testing.\n---\n\n"

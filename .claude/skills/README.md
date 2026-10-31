@@ -14,12 +14,12 @@ digest, a grade, or a capability declaration.
 | `skill-creator/` | [`anthropics/skills`](https://github.com/anthropics/skills/tree/main/skills/skill-creator) | Apache-2.0 |
 
 This copy exists so Claude Code loads the skill for sessions in this repository --
-project skills are read from `.claude/skills/` and nowhere else. The catalogue entry
-at [`skills/anthropic/skill-creator/`](../../skills/anthropic/skill-creator/) is the
-documented one, and it additionally carries `attestation.json` and `evals/`.
-`tests/unit/test_vendored_skill_parity.py` fails the build if the two copies drift,
-and asserts that this one carries no `attestation.json`: nothing under `.claude/` is
-digest-checked, so an attestation here would be a claim no CI run could enforce.
+project skills are read from `.claude/skills/`. Since 2026-10-31 it is the only
+copy: the catalogue under `skills/` holds original skills only.
+`tests/unit/test_vendored_skill_parity.py` checks that it keeps its upstream
+licence, that no vendored copy creeps back into `skills/`, and that this one
+carries no `attestation.json`: nothing under `.claude/` is digest-checked, so an
+attestation here would be a claim no CI run could enforce.
 
 ### `skill-creator`
 
@@ -42,9 +42,8 @@ not by editing in place.
 
 **It does not know this repository's rules.** `skill-creator` emits an
 Anthropic-format skill — `name` and `description` frontmatter, and nothing else.
-A skill destined for `skills/` additionally needs `version`, an
+A skill destined for `skills/` additionally needs `metadata.version`, an
 `attestation.json` carrying a truthful `capabilities` block, `evals/test-cases.json`,
-a refreshed `content_digest`, and — under `skills/custom/` — its `.agents/skills/`
-mirror. Draft and evaluate with `skill-creator`, then apply this repository's
+a refreshed `content_digest`, and its `.agents/skills/` mirror. Draft and evaluate with `skill-creator`, then apply this repository's
 layer with the templates in `utils/skill-creator/` and re-run
 `python scripts/validate_skills.py` and `python scripts/skill_digest.py --update`.

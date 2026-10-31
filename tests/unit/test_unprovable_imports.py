@@ -35,7 +35,7 @@ def auditor():
 
 
 def write_skill(tmp_path: Path, source: str, extra: dict = None) -> Path:
-    skill = tmp_path / "skills" / "custom" / "probe"
+    skill = tmp_path / "skills" / "probe"
     (skill / "scripts").mkdir(parents=True)
     (skill / "SKILL.md").write_text(
         "---\nname: probe\ndescription: probe. Use when testing.\n---\n# probe\n",

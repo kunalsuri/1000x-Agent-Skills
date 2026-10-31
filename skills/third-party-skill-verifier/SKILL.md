@@ -1,8 +1,11 @@
 ---
 name: third-party-skill-verifier
 description: Statically verify an Agent Skill written by someone else before installing it, and re-verify it later to catch a silent update. Reads every file in the bundle -- including the ones SKILL.md never mentions -- and reports what the skill's code can actually do, what runs without being invoked, and what was engineered to escape review. Use when the user has downloaded, cloned, found, or been sent a skill, plugin, or agent extension and wants to know whether it is safe to install; when reviewing a skills marketplace listing or a pull request that adds a third-party skill; or when re-checking a skill already installed.
-version: 1.0.0
-allowed-tools: [view_file, run_command, grep_search]
+license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri
+  version: "1.0.0"
 ---
 
 # Third-Party Skill Verifier

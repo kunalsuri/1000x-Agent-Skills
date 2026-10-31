@@ -48,6 +48,54 @@ jobs:
       - name: Skill Doctor validator
         run: python scripts/validate_skills.py
 
+  # Level-1 conformance with the ecosystem's own validators, in addition to
+  # this repository's stdlib checks. Both are static: no model is called, no
+  # API key is needed, nothing is billed. Both are pinned to exact versions so
+  # an upstream change cannot alter what CI accepts without a reviewed commit
+  # here. Bump the pins deliberately.
+  spec-conformance:
+    name: Upstream validators (skills-ref, claude plugin validate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # agentskills/agentskills main on 2026-10-31. skills-ref is the spec's
+      # reference validator ("demonstration purposes", per its README).
+      SKILLS_REF_SHA: 69ef37e9424c0a7ea9dd2293b559e43ec8176379
+      # Version used to validate .claude-plugin/marketplace.json locally.
+      CLAUDE_CODE_VERSION: 2.1.316
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install skills-ref (pinned commit)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "skills-ref @ git+https://github.com/agentskills/agentskills@${SKILLS_REF_SHA}#subdirectory=skills-ref"
+
+      - name: skills-ref validate (every skill)
+        run: |
+          status=0
+          for dir in skills/*/; do
+            [ -f "${dir}SKILL.md" ] || continue
+            if skills-ref validate "$dir"; then
+              echo "OK   $dir"
+            else
+              echo "FAIL $dir"; status=1
+            fi
+          done
+          exit $status
+
+      - name: Install Claude Code CLI (pinned, no login)
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+
+      - name: claude plugin validate (marketplace manifest)
+        run: claude plugin validate .
+
   validate:
     name: Validate skills (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -80,7 +128,7 @@ jobs:
         run: python scripts/validate_skills.py
 
       - name: Pre-flight release audit
-        run: python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict
+        run: python skills/public-repo-release-review/scripts/audit_repo.py --target . --strict
 
       # The coverage floor is a ratchet: raise it as coverage improves, never
       # lower it to make a red build green.

@@ -1,12 +1,12 @@
 ---
 name: saas-app-builder
-version: 1.0.0
-author: Kunal Suri <kunal.suri@cea.fr>
 description: Scaffolds and implements full-stack SaaS applications with React 19, Tailwind CSS v4, shadcn/ui primitives, Express port 3031, and a 4-harness test suite. Use when asked to create a SaaS app, scaffold a full-stack monorepo, build a feature-driven SaaS template, or create a modern web application with integrated tests.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [view_file, run_command, replace_file_content, write_to_file, grep_search]
-tags: [saas, full-stack, react, vite, tailwindcss-v4, shadcn-ui, express, vitest, monorepo, tdd]
 license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri <kunal.suri@cea.fr>
+  version: "1.0.0"
+  tags: saas, full-stack, react, vite, tailwindcss-v4, shadcn-ui, express, vitest, monorepo, tdd
 ---
 
 # 🚀 SaaS App Builder
@@ -18,7 +18,7 @@ The **SaaS App Builder** skill couples a **deterministic Python scaffolding engi
 ## 🏗️ Progressive Architecture & Directory Layout
 
 ```text
-skills/custom/saas-app-builder/
+skills/saas-app-builder/
 ├── SKILL.md                               # 5-Phase TDD & Feature Architecture Workflow
 ├── attestation.json                       # Multi-agent verification attestation
 ├── evals/test-cases.json                  # Intent and benchmark test cases
@@ -33,12 +33,12 @@ skills/custom/saas-app-builder/
 ```
 
 Every command in this file is written assuming this skill is installed at
-`skills/custom/saas-app-builder/` relative to wherever you run it from (that's
+`skills/saas-app-builder/` relative to wherever you run it from (that's
 the layout in this skill's origin repo — see `attestation.json`'s
 `provenance.origin_url`). If a platform installs it elsewhere (e.g. Claude
 Code's `.claude/skills/saas-app-builder/`), substitute the actual path —
 `python .claude/skills/saas-app-builder/scripts/scaffold_saas.py ...` instead
-of `python skills/custom/saas-app-builder/scripts/scaffold_saas.py ...`, and
+of `python skills/saas-app-builder/scripts/scaffold_saas.py ...`, and
 likewise for `audit_scaffold.py`. The commands are correct relative paths,
 just anchored to one specific install location.
 
@@ -49,7 +49,7 @@ just anchored to one specific install location.
 `scaffold_saas.py` is a large file, but ~90% of it is inert template *content* (JS/TS/CSS/JSON strings written verbatim to disk) — the executable *logic* is small: parse CLI args, build a `{path: content}` map, write each file under `--target-dir`. Before trusting any copy of this skill (including after any update to `scaffold_saas.py`), verify that structurally rather than by reading 2000+ lines:
 
 ```bash
-python skills/custom/saas-app-builder/scripts/audit_scaffold.py skills/custom/saas-app-builder/scripts/scaffold_saas.py
+python skills/saas-app-builder/scripts/audit_scaffold.py skills/saas-app-builder/scripts/scaffold_saas.py
 ```
 
 It parses the file with Python's `ast` module (not a regex skim — a `subprocess.run(...)` can't hide from an AST walk the way it could from a quick read) and reports:
@@ -96,7 +96,7 @@ Before running the scaffolder, resolve these three things — ask the user in a 
 Run the deterministic CLI scaffolder to generate the complete foundation:
 
 ```bash
-python skills/custom/saas-app-builder/scripts/scaffold_saas.py --name "<app-name>" --target-dir "<target-directory>" --port 3031
+python skills/saas-app-builder/scripts/scaffold_saas.py --name "<app-name>" --target-dir "<target-directory>" --port 3031
 ```
 
 This immediately creates:

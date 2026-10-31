@@ -1,0 +1,19 @@
+{
+  "skill_name": "lessons-learnt",
+  "version": "1.0.0",
+  "description": "Trigger evaluation. Negatives are near-misses that share vocabulary (notes, summary, changelog, memory) but need a different output.",
+  "trigger_evaluation": {
+    "positive_prompts": [
+      {"id": "pos-01", "prompt": "Write the lessons learnt from this session.", "expected_trigger": true},
+      {"id": "pos-02", "prompt": "before we stop, record what we figured out about the flaky CI and the proxy so next time we don't redo it", "expected_trigger": true},
+      {"id": "pos-03", "prompt": "Add today's session to docs/lessons-learnt with the rules we now follow.", "expected_trigger": true},
+      {"id": "pos-04", "prompt": "We wasted an hour because the validator assumed skills/<category>/. Capture that as a rule so it never happens again.", "expected_trigger": true}
+    ],
+    "negative_prompts": [
+      {"id": "neg-01", "prompt": "Summarise this PR description in three bullet points.", "expected_trigger": false},
+      {"id": "neg-02", "prompt": "Update CHANGELOG.md for the 1.2.0 release.", "expected_trigger": false},
+      {"id": "neg-03", "prompt": "Write a postmortem for yesterday's production outage for the incident channel.", "expected_trigger": false},
+      {"id": "neg-04", "prompt": "Remember that I prefer pytest over unittest.", "expected_trigger": false}
+    ]
+  }
+}

@@ -1,12 +1,11 @@
 ---
 name: cross-platform-dev-scripts
-version: 1.0.0
 description: Generates and validates turnkey, cross-platform dev setup and test scripts (scripts/win and scripts/linux) with dual-engine uv/venv support. Use when setting up a repository for local onboarding, adding Windows and Linux dev scripts, or verifying script parity.
 license: Apache-2.0
 compatibility: Requires bash or PowerShell, and Python 3.10+
-allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
 metadata:
   author: Kunal Suri <kunal.suri@cea.fr>
+  version: "1.0.0"
   tags: dev-scripts, powershell, bash, onboarding, testing, uv
 ---
 

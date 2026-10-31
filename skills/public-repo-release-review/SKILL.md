@@ -1,12 +1,12 @@
 ---
 name: public-repo-release-review
-version: 1.0.0
-author: Kunal Suri <kunal.suri@cea.fr>
 description: Review and audit a codebase before releasing or publishing it to public GitHub. Performs deep security checks, secret leak scanning, open-source governance verification (SECURITY.md, COLLABORATORS.md, CITATION.cff, LICENSE, CODE_OF_CONDUCT.md), link integrity checks, and codebase hygiene audits. Use when reviewing a codebase before public release, auditing repository security and governance, or preparing a repository for public GitHub launch.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [run_command, view_file, write_to_file, replace_file_content]
-tags: [public-repo, release-review, security-audit, governance, secret-scan, preflight, citation]
 license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri <kunal.suri@cea.fr>
+  version: "1.0.0"
+  tags: public-repo, release-review, security-audit, governance, secret-scan, preflight, citation
 ---
 
 # Public Repository Release Review & Pre-Flight Audit

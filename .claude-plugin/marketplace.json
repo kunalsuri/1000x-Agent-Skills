@@ -1,0 +1,37 @@
+{
+  "name": "1000x-agent-skills",
+  "owner": {
+    "name": "Kunal Suri",
+    "url": "https://github.com/kunalsuri"
+  },
+  "metadata": {
+    "description": "Original, capability-declared Agent Skills: release review, third-party skill verification, test scaffolding, multi-agent docs, lessons learnt and more."
+  },
+  "plugins": [
+    {
+      "name": "1000x-agent-skills",
+      "description": "Every skill in skills/ of kunalsuri/1000x-Agent-Skills. Each declares its capabilities in attestation.json and is checked in CI.",
+      "source": "./",
+      "strict": false,
+      "license": "Apache-2.0",
+      "homepage": "https://github.com/kunalsuri/1000x-Agent-Skills",
+      "keywords": [
+        "agent-skills",
+        "skills",
+        "security",
+        "testing",
+        "documentation"
+      ],
+      "skills": [
+        "./skills/cross-platform-dev-scripts",
+        "./skills/lessons-learnt",
+        "./skills/multi-agent-docs",
+        "./skills/preflight-test-engineer",
+        "./skills/public-repo-release-review",
+        "./skills/readme-designer",
+        "./skills/saas-app-builder",
+        "./skills/third-party-skill-verifier"
+      ]
+    }
+  ]
+}

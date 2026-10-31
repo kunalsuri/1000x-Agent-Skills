@@ -1,7 +1,7 @@
 """
 The three tools must look at the same set of skills.
 
-scripts/validate_skills.py walks exactly skills/<category>/<skill>. Both
+scripts/validate_skills.py walks exactly skills/<skill>. Both
 scripts/audit_skill_safety.py and scripts/skill_digest.py rglob for SKILL.md and
 so reach any depth. A skill nested one level deeper was therefore audited,
 digested and never health-checked -- and nothing reported that, because the
@@ -40,26 +40,36 @@ def place(skills_root: Path, relative: str, name: str) -> None:
 
 def test_canonical_depth_is_accepted(validator, tmp_path):
     skills_root = tmp_path / "skills"
-    place(skills_root, "custom/well-placed", "well-placed")
+    place(skills_root, "well-placed", "well-placed")
     assert validator.audit_tree_layout(skills_root) == []
 
 
 def test_nested_skill_is_reported(validator, tmp_path):
     """This is the case that used to pass in silence."""
     skills_root = tmp_path / "skills"
-    place(skills_root, "custom/wrapper/inner", "inner")
+    place(skills_root, "wrapper/inner", "inner")
     errors = validator.audit_tree_layout(skills_root)
     assert len(errors) == 1
-    assert "custom/wrapper/inner/SKILL.md" in errors[0]
+    assert "wrapper/inner/SKILL.md" in errors[0]
 
 
-def test_skill_directly_under_skills_is_reported(validator, tmp_path):
-    """Too shallow is just as invisible to the two-level walk as too deep."""
+def test_old_category_layout_is_reported(validator, tmp_path):
+    """The pre-2026-10-31 skills/<category>/<skill> layout is now one level too
+    deep, and must be reported rather than skipped."""
     skills_root = tmp_path / "skills"
-    place(skills_root, "no-category", "no-category")
+    place(skills_root, "custom/legacy", "legacy")
     errors = validator.audit_tree_layout(skills_root)
     assert len(errors) == 1
-    assert "no-category/SKILL.md" in errors[0]
+    assert "custom/legacy/SKILL.md" in errors[0]
+
+
+def test_skill_md_at_the_skills_root_is_reported(validator, tmp_path):
+    """Too shallow is just as invisible to the one-level walk as too deep."""
+    skills_root = tmp_path / "skills"
+    skills_root.mkdir()
+    (skills_root / "SKILL.md").write_text(FRONTMATTER.format(name="skills"), encoding="utf-8")
+    errors = validator.audit_tree_layout(skills_root)
+    assert len(errors) == 1
 
 
 def test_missing_skills_root_is_not_an_error(validator, tmp_path):
