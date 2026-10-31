@@ -30,7 +30,7 @@ Use the tool.
 
 @pytest.fixture
 def audit(load_script):
-    return load_script("skills/custom/readme-designer/scripts/audit_readme.py")
+    return load_script("skills/readme-designer/scripts/audit_readme.py")
 
 
 class TestSlugify:

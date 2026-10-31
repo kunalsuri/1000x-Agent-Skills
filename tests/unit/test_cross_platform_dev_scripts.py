@@ -1,5 +1,5 @@
 """
-Tests for skills/custom/cross-platform-dev-scripts.
+Tests for skills/cross-platform-dev-scripts.
 Validates the scaffolding and validation scripts for cross-platform dev scripts.
 """
 
@@ -11,12 +11,12 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def scaffold_mod(load_script):
-    return load_script("skills/custom/cross-platform-dev-scripts/scripts/scaffold_dev_scripts.py")
+    return load_script("skills/cross-platform-dev-scripts/scripts/scaffold_dev_scripts.py")
 
 
 @pytest.fixture
 def validate_mod(load_script):
-    return load_script("skills/custom/cross-platform-dev-scripts/scripts/validate_dev_scripts.py")
+    return load_script("skills/cross-platform-dev-scripts/scripts/validate_dev_scripts.py")
 
 
 def test_detect_requirements(scaffold_mod, tmp_path):

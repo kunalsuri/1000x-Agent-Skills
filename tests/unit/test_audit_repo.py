@@ -11,7 +11,7 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-SCRIPT = "skills/custom/public-repo-release-review/scripts/audit_repo.py"
+SCRIPT = "skills/public-repo-release-review/scripts/audit_repo.py"
 
 
 @pytest.fixture

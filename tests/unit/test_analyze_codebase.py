@@ -9,7 +9,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def analyze(load_script):
-    return load_script("skills/custom/preflight-test-engineer/scripts/analyze_codebase.py")
+    return load_script("skills/preflight-test-engineer/scripts/analyze_codebase.py")
 
 
 @pytest.fixture

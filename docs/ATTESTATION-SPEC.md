@@ -124,7 +124,7 @@ than something that silently never happens.
 ```bash
 python scripts/skill_digest.py --check                     # verify every skill
 python scripts/skill_digest.py --update                    # re-bind after a reviewed change
-python scripts/skill_digest.py --print skills/custom/NAME  # show the manifest
+python scripts/skill_digest.py --print skills/NAME  # show the manifest
 ```
 
 The digest is path-independent, so anyone who copies a skill out of this

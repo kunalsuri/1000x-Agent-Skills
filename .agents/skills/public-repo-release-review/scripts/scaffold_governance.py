@@ -293,7 +293,7 @@ PR_TEMPLATE_MD = """## 📋 Description of Changes
 <!-- Brief summary of what this pull request changes or adds -->
 
 ## 🧩 Modified / Added Components
-- [ ] New Skill (`skills/<category>/<skill-name>/`)
+- [ ] New Skill (`skills/<skill-name>/`)
 - [ ] Specification Compliance (`SKILL.md` frontmatter + <500 lines)
 - [ ] Attestation (`attestation.json`)
 - [ ] Evaluation Test Cases (`evals/test-cases.json`)

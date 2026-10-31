@@ -9,7 +9,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def scaffold(load_script):
-    return load_script("skills/custom/multi-agent-docs/scripts/scaffold.py")
+    return load_script("skills/multi-agent-docs/scripts/scaffold.py")
 
 
 class TestManifestDetection:

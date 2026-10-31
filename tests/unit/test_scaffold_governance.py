@@ -10,7 +10,7 @@ REQUIRED = ["SECURITY.md", "COLLABORATORS.md", "CITATION.cff",
 
 @pytest.fixture
 def governance(load_script):
-    return load_script("skills/custom/public-repo-release-review/scripts/scaffold_governance.py")
+    return load_script("skills/public-repo-release-review/scripts/scaffold_governance.py")
 
 
 @pytest.fixture
@@ -56,7 +56,7 @@ class TestScaffoldedOutputSatisfiesTheAuditor:
         what it checks. Otherwise it scaffolds a repo that then fails its own
         release review.
         """
-        audit = load_script("skills/custom/public-repo-release-review/scripts/audit_repo.py")
+        audit = load_script("skills/public-repo-release-review/scripts/audit_repo.py")
         (tmp_path / "LICENSE").write_text("Apache-2.0\n", encoding="utf-8")
         (tmp_path / "README.md").write_text("# Demo\n", encoding="utf-8")
         (tmp_path / ".gitignore").write_text("__pycache__/\n", encoding="utf-8")

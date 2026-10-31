@@ -1,5 +1,5 @@
 """
-Parity between skills/custom/ and the .agents/skills/ mirror.
+Parity between skills/ and the .agents/skills/ mirror.
 
 The mirror exists so non-Claude agents find the same skills. Duplicated
 content drifts silently: before this test, .agents/skills/ was missing
@@ -15,7 +15,7 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-CANONICAL = "skills/custom"
+CANONICAL = "skills"
 MIRROR = ".agents/skills"
 
 

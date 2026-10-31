@@ -25,7 +25,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = REPO_ROOT / "scripts"
-SKILLS = REPO_ROOT / "skills" / "custom"
+SKILLS = REPO_ROOT / "skills"
 
 
 class NetworkAccessDenied(RuntimeError):
@@ -96,7 +96,7 @@ def load_script():
     Load a repository script by relative path.
 
         module = load_script("scripts/validate_skills.py")
-        module = load_script("skills/custom/readme-designer/scripts/audit_readme.py")
+        module = load_script("skills/readme-designer/scripts/audit_readme.py")
     """
     cache: Dict[str, Any] = {}
 
@@ -125,14 +125,14 @@ def skill_factory(tmp_path: Path):
               evals: Dict[str, Any] = None,
               with_digest: bool = True) -> Path:
         import json
-        skill_dir = tmp_path / "skills" / "custom" / name
+        skill_dir = tmp_path / "skills" / name
         (skill_dir / "evals").mkdir(parents=True)
 
         if frontmatter is None:
             frontmatter = (
                 f"name: {name}\n"
                 f"description: A sample skill. Use when exercising the validator.\n"
-                f"version: 1.0.0\n"
+                f"metadata:\n  version: \"1.0.0\"\n"
             )
         (skill_dir / "SKILL.md").write_text(f"---\n{frontmatter}---\n\n{body}", encoding="utf-8")
 

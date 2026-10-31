@@ -7,7 +7,7 @@ pytestmark = pytest.mark.unit
 
 @pytest.fixture
 def generator(load_script):
-    return load_script("skills/custom/readme-designer/scripts/scaffold_readme.py")
+    return load_script("skills/readme-designer/scripts/scaffold_readme.py")
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class TestGeneratedReadmeSatisfiesTheAuditor:
         scored badly, the grader and the generator would be describing
         different standards.
         """
-        audit = load_script("skills/custom/readme-designer/scripts/audit_readme.py")
+        audit = load_script("skills/readme-designer/scripts/audit_readme.py")
         path = tmp_path / "README.md"
         path.write_text(generator.generate_readme_content(
             "Demo", "Tagline", "Description.", "Author", "Apache 2.0"), encoding="utf-8")

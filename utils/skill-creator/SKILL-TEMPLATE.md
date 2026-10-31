@@ -1,12 +1,11 @@
 ---
 name: example-skill-name
-version: 1.0.0
-author: Your Name <your-email@example.com>
-description: A clear, high-density summary of what this skill accomplishes. Use when encountering scenario X, handling task Y, or orchestrating workflow Z.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [run_command, view_file, write_to_file, replace_file_content, grep_search]
-tags: [workflow, automation, quality]
+description: A clear summary of what this skill accomplishes, in the user's words. Use when encountering scenario X, handling task Y, or orchestrating workflow Z, even if the user does not mention Z by name.
 license: Apache-2.0
+metadata:
+  author: Your Name <your-email@example.com>
+  version: "1.0.0"
+  tags: workflow, automation, quality
 ---
 
 # Example Skill Name
@@ -37,3 +36,6 @@ Brief explanation of the capability this skill adds to the agent and why it is n
 
 ## References & Deep Dive
 If this skill requires extensive schemas or reference data, link to `references/` (e.g., `[API Guide](references/api-guide.md)`).
+
+## Gotchas
+- Add a concrete, environment-specific fact here every time the agent gets something wrong while you test this skill.

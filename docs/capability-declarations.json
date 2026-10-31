@@ -30,6 +30,16 @@
         "filesystem": "unrestricted"
       },
       "rationale": "Declared 'unrestricted' deliberately: this is the only tool here that writes OUTSIDE the repository, into agent skill directories under the user's home (~/.claude/skills, ~/.gemini/config/skills). It replaces a destination directory when a skill of the same name already exists. Run it with --dry-run first; it refuses to install any skill that fails the safety audit."
+    },
+    {
+      "path": "scripts/sync_mirror.py",
+      "capabilities": {
+        "network": "none",
+        "process_execution": "none",
+        "dynamic_code_execution": "none",
+        "filesystem": "workspace-delete"
+      },
+      "rationale": "Copies skills/<skill>/ into .agents/skills/<skill>/ and removes mirror directories with no canonical source. Writes and deletes only inside the repository's .agents/skills/. Dry run by default; --write applies."
     }
   ]
 }

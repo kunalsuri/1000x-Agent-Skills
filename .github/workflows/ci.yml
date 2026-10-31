@@ -80,7 +80,7 @@ jobs:
         run: python scripts/validate_skills.py
 
       - name: Pre-flight release audit
-        run: python skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict
+        run: python skills/public-repo-release-review/scripts/audit_repo.py --target . --strict
 
       # The coverage floor is a ratchet: raise it as coverage improves, never
       # lower it to make a red build green.

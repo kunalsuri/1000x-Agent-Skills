@@ -147,7 +147,7 @@ else
   run_step "Skill safety audit"       "$VENV_PY" scripts/audit_skill_safety.py --strict
   run_step "Content digest check"     "$VENV_PY" scripts/skill_digest.py --check
   run_step "Skill Doctor validator"   "$VENV_PY" scripts/validate_skills.py
-  run_step "Pre-flight release audit" "$VENV_PY" skills/custom/public-repo-release-review/scripts/audit_repo.py --target . --strict
+  run_step "Pre-flight release audit" "$VENV_PY" skills/public-repo-release-review/scripts/audit_repo.py --target . --strict
   run_step "Pytest suite (coverage >= 60%)" \
     "$VENV_PY" -m pytest -q --cov=scripts --cov=skills --cov=utils \
       --cov-report=term-missing --cov-fail-under=60

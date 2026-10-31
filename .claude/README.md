@@ -15,6 +15,6 @@ Two things this directory is deliberately **not**:
   writes to `~/.claude/skills/` in your home directory, never into the
   repository. Installing into a checkout would put unversioned copies of every
   skill inside the tree the digests are computed over.
-- **Not a second source of truth.** `skills/custom/` is canonical. `.agents/skills/`
+- **Not a second source of truth.** `skills/` is canonical. `.agents/skills/`
   is a byte-identical mirror enforced by `tests/unit/test_agents_mirror_parity.py`.
   Adding a third copy here would give drift somewhere new to hide.

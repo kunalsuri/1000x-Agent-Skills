@@ -155,7 +155,7 @@ class TestAttestationEnforcement:
         skill = skill_factory()
         assert validator.validate_skill(skill)["status"] == "PASS"
         (skill / "SKILL.md").write_text(
-            "---\nname: sample-skill\ndescription: Use when testing.\nversion: 1.0.0\n---\n"
+            "---\nname: sample-skill\ndescription: Use when testing.\nmetadata:\n  version: \"1.0.0\"\n---\n"
             "\nSomething was slipped in here after attestation.\n", encoding="utf-8")
         result = validator.validate_skill(skill)
         assert result["status"] == "FAIL"
@@ -201,38 +201,43 @@ class TestReadmeCatalogParity:
     @staticmethod
     def _build(tmp_path, listed, on_disk):
         skills_root = tmp_path / "skills"
-        for cat, name in on_disk:
-            skill_dir = skills_root / cat / name
+        for name in on_disk:
+            skill_dir = skills_root / name
             skill_dir.mkdir(parents=True)
             (skill_dir / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
         readme = tmp_path / "README.md"
         readme.write_text(
-            "\n".join(f"[`{n}`](./skills/{c}/{n}/SKILL.md)" for c, n in listed),
+            "\n".join(f"[`{n}`](./skills/{n}/SKILL.md)" for n in listed),
             encoding="utf-8",
         )
         return readme, skills_root
 
     def test_phantom_readme_reference_is_an_error(self, validator, tmp_path):
-        readme, skills_root = self._build(tmp_path, listed=[("custom", "ghost")], on_disk=[])
+        readme, skills_root = self._build(tmp_path, listed=["ghost"], on_disk=[])
         errors = validator.audit_readme_parity(readme, skills_root)
         assert len(errors) == 1 and "non-existent skill 'ghost'" in errors[0]
 
     def test_unlisted_disk_skill_is_an_error(self, validator, tmp_path):
-        readme, skills_root = self._build(tmp_path, listed=[], on_disk=[("custom", "hidden")])
+        readme, skills_root = self._build(tmp_path, listed=[], on_disk=["hidden"])
         errors = validator.audit_readme_parity(readme, skills_root)
-        assert len(errors) == 1 and "custom/hidden" in errors[0]
+        assert len(errors) == 1 and "'hidden'" in errors[0]
         assert "never referenced" in errors[0]
 
     def test_matching_catalog_passes(self, validator, tmp_path):
-        pair = [("custom", "alpha"), ("custom", "beta")]
+        pair = ["alpha", "beta"]
         readme, skills_root = self._build(tmp_path, listed=pair, on_disk=pair)
         assert validator.audit_readme_parity(readme, skills_root) == []
 
+    def test_directory_link_without_skill_md_counts(self, validator, tmp_path):
+        readme, skills_root = self._build(tmp_path, listed=[], on_disk=["alpha"])
+        readme.write_text("[alpha](skills/alpha/)", encoding="utf-8")
+        assert validator.audit_readme_parity(readme, skills_root) == []
+
     def test_missing_readme_reports_disk_skills_as_unlisted(self, validator, tmp_path):
-        readme, skills_root = self._build(tmp_path, listed=[], on_disk=[("custom", "alpha")])
+        readme, skills_root = self._build(tmp_path, listed=[], on_disk=["alpha"])
         readme.unlink()
         errors = validator.audit_readme_parity(readme, skills_root)
-        assert len(errors) == 1 and "custom/alpha" in errors[0]
+        assert len(errors) == 1 and "'alpha'" in errors[0]
 
     def test_shipped_readme_lists_every_shipped_skill(self, validator, repo_root):
         errors = validator.audit_readme_parity(repo_root / "README.md", repo_root / "skills")
@@ -242,3 +247,98 @@ class TestReadmeCatalogParity:
 def result_has(validator, skill, needle):
     result = validator.validate_skill(skill)
     return needle in errors_of(result) or needle in warnings_of(result)
+
+
+class TestSpecConformance:
+    """The frontmatter checks follow the open spec, verified 2026-10-31."""
+
+    @staticmethod
+    def _skill(tmp_path, frontmatter):
+        skill = tmp_path / "probe"
+        skill.mkdir()
+        (skill / "SKILL.md").write_text(f"---\n{frontmatter}\n---\n# probe\n", encoding="utf-8")
+        return skill
+
+    def test_top_level_version_is_an_error(self, validator, tmp_path):
+        skill = self._skill(tmp_path, "name: probe\ndescription: Use when probing.\nversion: 1.0.0")
+        assert "Frontmatter key 'version' is not in the Agent Skills spec" in errors_of(
+            validator.validate_skill(skill))
+
+    def test_version_under_metadata_satisfies_the_version_check(self, validator, tmp_path):
+        skill = self._skill(tmp_path, 'name: probe\ndescription: Use when probing.\nmetadata:\n  version: "1.0.0"')
+        result = validator.validate_skill(skill)
+        assert "semantic version" not in warnings_of(result)
+        assert "not in the Agent Skills spec" not in errors_of(result)
+
+    def test_list_compatibility_is_an_error(self, validator, tmp_path):
+        skill = self._skill(tmp_path, "name: probe\ndescription: Use when probing.\ncompatibility: [claude-code, cursor]")
+        assert "must be a single string" in errors_of(validator.validate_skill(skill))
+
+    def test_claude_code_extension_warns_not_fails(self, validator, tmp_path):
+        skill = self._skill(tmp_path, "name: probe\ndescription: Use when probing.\ndisable-model-invocation: true")
+        result = validator.validate_skill(skill)
+        assert "Claude Code extension" in warnings_of(result)
+        assert "not in the Agent Skills spec" not in errors_of(result)
+
+
+class TestSpecFreshness:
+    def _meta(self, tmp_path, stamp):
+        meta = tmp_path / "skill-specs.meta.yaml"
+        meta.write_text(f"document:\n  last_verified: \"{stamp}\"\n", encoding="utf-8")
+        return meta
+
+    def test_recent_stamp_is_quiet(self, validator, tmp_path):
+        import datetime as dt
+        meta = self._meta(tmp_path, "2026-10-01")
+        assert validator.audit_spec_freshness(meta, today=dt.date(2026, 10, 31)) == []
+
+    def test_stale_stamp_warns(self, validator, tmp_path):
+        import datetime as dt
+        meta = self._meta(tmp_path, "2026-01-01")
+        warnings = validator.audit_spec_freshness(meta, today=dt.date(2026, 10, 31))
+        assert len(warnings) == 1 and "days ago" in warnings[0]
+
+    def test_missing_stamp_warns(self, validator, tmp_path):
+        meta = tmp_path / "skill-specs.meta.yaml"
+        meta.write_text("document: {}\n", encoding="utf-8")
+        assert validator.audit_spec_freshness(meta)
+
+    def test_shipped_spec_has_a_parseable_stamp(self, validator, repo_root):
+        meta = repo_root / "docs" / "agent-skills-specs" / "skill-specs.meta.yaml"
+        warnings = validator.audit_spec_freshness(meta, max_age_days=10**6)
+        assert warnings == [], warnings
+
+
+class TestVerifiedNeedsEvidence:
+    """The schema defines VERIFIED as 'with linked evidence'; hold it to that."""
+
+    @staticmethod
+    def _with_status(skill_factory, status, evidence=None):
+        row = {"platform": "Claude Code", "model": "m", "status": "PASS"}
+        if evidence:
+            row["evidence_url"] = evidence
+        attestation = {
+            "skill_name": "sample-skill",
+            "version": "1.0.0",
+            "attestation_status": status,
+            "capabilities": {"network": "none", "process_execution": "none",
+                             "dynamic_code_execution": "none", "filesystem": "read-only"},
+            "attested_by": "Test Harness",
+            "attestation_date": "2026-01-01",
+            "tested_platforms": [row],
+            "provenance": {"source_type": "original", "license": "Apache-2.0"},
+        }
+        return skill_factory(attestation=attestation)
+
+    def test_verified_without_evidence_warns(self, validator, skill_factory):
+        result = validator.validate_skill(self._with_status(skill_factory, "VERIFIED"))
+        assert "no PASS row" in warnings_of(result)
+        assert not result["errors"]
+
+    def test_verified_with_evidence_is_quiet(self, validator, skill_factory):
+        skill = self._with_status(skill_factory, "VERIFIED", "https://example.org/run/1")
+        assert "no PASS row" not in warnings_of(validator.validate_skill(skill))
+
+    def test_tested_without_evidence_is_quiet(self, validator, skill_factory):
+        skill = self._with_status(skill_factory, "TESTED")
+        assert "no PASS row" not in warnings_of(validator.validate_skill(skill))

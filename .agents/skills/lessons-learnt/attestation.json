@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/kunalsuri/1000x-Agent-Skills/main/docs/schemas/attestation.schema.json",
+  "skill_name": "lessons-learnt",
+  "version": "1.0.0",
+  "attestation_status": "DRAFT",
+  "capabilities": {
+    "network": "none",
+    "process_execution": "none",
+    "dynamic_code_execution": "none",
+    "filesystem": "read-only"
+  },
+  "capabilities_rationale": "Instructions only: the skill ships no scripts, so its code can do nothing. The agent following it writes Markdown files under docs/lessons-learnt/ with its own tools; that is the host agent's capability, governed by the host's permission prompts, not this skill's.",
+  "attested_by": "Kunal Suri",
+  "attestation_date": "2026-10-31",
+  "tested_platforms": [
+    {
+      "platform": "Claude Code",
+      "model": "not recorded",
+      "status": "NOT_RUN",
+      "notes": "Used once to write docs/lessons-learnt/2026-10-31_* during the repository audit. That run was not captured as an eval (no with/without-skill baseline, no grading), so it is recorded as NOT_RUN rather than PASS."
+    }
+  ],
+  "provenance": {
+    "source_type": "original",
+    "origin_url": "https://github.com/kunalsuri/1000x-Agent-Skills",
+    "license": "Apache-2.0"
+  },
+  "security_audit": {
+    "tool": "scripts/audit_skill_safety.py",
+    "method": "Markdown instruction-surface scan (no scripts to analyse).",
+    "last_run_date": "2026-10-31",
+    "last_run_result": "PASS",
+    "enforcement": "Re-runs on every push and pull request; the content digest below stops matching if any file here is edited without re-attesting.",
+    "reproduce": "python scripts/audit_skill_safety.py --skill lessons-learnt --strict"
+  },
+  "content_digest": "sha256:0f59a10080a61d881b812d1ac9a999b629e1671ebd18908431621279a0e70d2f"
+}

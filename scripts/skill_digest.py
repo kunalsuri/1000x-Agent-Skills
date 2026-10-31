@@ -25,7 +25,7 @@ without installing anything first:
 
     python scripts/skill_digest.py --check
     python scripts/skill_digest.py --update
-    python scripts/skill_digest.py --print skills/custom/readme-designer
+    python scripts/skill_digest.py --print skills/readme-designer
 """
 
 import argparse

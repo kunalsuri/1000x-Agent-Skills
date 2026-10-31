@@ -2,7 +2,7 @@
 
 ## Centralized Manifest
 
-All package dependencies for scaffolded projects are defined in the `PACKAGE_MANIFEST` dictionary inside `skills/custom/saas-app-builder/scripts/scaffold_saas.py`.
+All package dependencies for scaffolded projects are defined in the `PACKAGE_MANIFEST` dictionary inside `skills/saas-app-builder/scripts/scaffold_saas.py`.
 
 ```python
 PACKAGE_MANIFEST = {

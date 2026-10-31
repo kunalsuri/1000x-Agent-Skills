@@ -1,12 +1,12 @@
 ---
 name: preflight-test-engineer
-version: 1.0.0
-author: Kunal Suri <kunal@example.com>
 description: Pre-flight codebase analysis, automated /tests/ suite scaffolding, and hermetic multi-stage verification for Python and TypeScript/React projects. Use when asked to test a codebase before running, scaffold a test suite into /tests/, verify test coverage, or execute pre-flight sanity checks.
-compatibility: [claude-code, antigravity, cursor, codex]
-allowed-tools: [view_file, run_command, replace_file_content, write_to_file, grep_search]
-tags: [testing, pytest, vitest, react-testing-library, preflight, tdd, quality-engineering]
 license: Apache-2.0
+compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
+metadata:
+  author: Kunal Suri <kunal@example.com>
+  version: "1.0.0"
+  tags: testing, pytest, vitest, react-testing-library, preflight, tdd, quality-engineering
 ---
 
 # 🚀 Pre-Flight Test Engineer
@@ -18,7 +18,7 @@ The **Pre-Flight Test Engineer** skill deterministically inspects a target codeb
 ## 🏗️ Progressive Architecture & Directory Layout
 
 ```text
-skills/custom/preflight-test-engineer/
+skills/preflight-test-engineer/
 ├── SKILL.md                          # Core 5-phase testing workflow
 ├── attestation.json                  # Multi-agent verification attestation
 ├── evals/test-cases.json             # Trigger evaluation prompts
@@ -117,15 +117,15 @@ python <skill-dir>/scripts/scaffold_tests.py --target-dir .
 
 Enhance generated test templates with deep assertions according to the language reference:
 
-1. **Python Projects**: Consult [python-testing.md](file:///skills/custom/preflight-test-engineer/references/python-testing.md)
+1. **Python Projects**: Consult [python-testing.md](references/python-testing.md)
    - Add `@pytest.mark.asyncio` for async endpoints.
    - Use `mocker.patch()` to intercept network calls.
    - Add `@given(st.text())` with **Hypothesis** for property-based fuzzing.
-2. **TypeScript/React Projects**: Consult [typescript-react-testing.md](file:///skills/custom/preflight-test-engineer/references/typescript-react-testing.md)
+2. **TypeScript/React Projects**: Consult [typescript-react-testing.md](references/typescript-react-testing.md)
    - Use `userEvent.setup()` and `screen.getByRole()` for RTL tests.
    - Add `toHaveNoViolations()` with `jest-axe` for accessibility contracts.
    - Intercept API calls using Mock Service Worker (MSW).
-3. **Boundary Checklist**: Consult [test-pyramid-and-mocking.md](file:///skills/custom/preflight-test-engineer/references/test-pyramid-and-mocking.md)
+3. **Boundary Checklist**: Consult [test-pyramid-and-mocking.md](references/test-pyramid-and-mocking.md)
    - Verify empty inputs (`""`, `[]`, `{}`, `None`/`null`), extreme numeric values, malformed JSON, and network timeouts.
 
 ---
