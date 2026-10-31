@@ -116,6 +116,8 @@ Reviewed false positives live in [`docs/safety-allowlist.json`](./docs/safety-al
 | Set up once | `./scripts/linux/dev-setup.sh` | `.\scripts\win\dev-setup.ps1` |
 | Run every check | `./scripts/linux/dev-test.sh` | `.\scripts\win\dev-test.ps1` |
 
+**Staying current.** A weekly workflow ([`weekly-maintenance.yml`](./.github/workflows/weekly-maintenance.yml)) checks every version pin, runs the full suite against the *latest* test dependencies, and fails if the spec summary is over 90 days old. To apply updates locally: `python scripts/check_updates.py --write && python -m pytest`.
+
 `dev-setup` creates `.venv/` using [uv](https://docs.astral.sh/uv/) when available, otherwise `venv` + `pip`. It never touches anything outside the repository, needs no `sudo`, and never pipes a downloaded script into a shell. `dev-test` runs the CI steps in CI's order and prints full output only for failing steps.
 
 ---

@@ -13,6 +13,7 @@
 - **Digest**: `python scripts/skill_digest.py --check`
 - **Sync mirror**: `python scripts/sync_mirror.py --write` (dry run without `--write`)
 - **Validate plugin manifest**: `claude plugin validate .`
+- **Check for updates**: `python scripts/check_updates.py` (dry run; `--write` bumps every pin, then run the tests). Runs weekly in `.github/workflows/weekly-maintenance.yml`.
 - **Upstream spec check**: `skills-ref validate skills/<skill>` (CI pins the version; see the `spec-conformance` job)
 - **Release**: `python skills/public-repo-release-review/scripts/audit_repo.py --target . --strict`
 - **Verify a third-party skill**: `python skills/third-party-skill-verifier/scripts/verify_skill_bundle.py <dir>`
@@ -20,7 +21,7 @@
 
 ## Directory Architecture
 - `docs/`: Specification schemas (`schemas/attestation.schema.json`), the reviewed safety-exemption list (`safety-allowlist.json`), tooling capability declarations, authoring standards, and benchmark documentation.
-- `scripts/`: Repository maintenance and validation CLI tools (`validate_skills.py`, `audit_skill_safety.py`, `skill_digest.py`, `sync_mirror.py`, `install_to_agent.py`).
+- `scripts/`: Repository maintenance and validation CLI tools (`validate_skills.py`, `audit_skill_safety.py`, `skill_digest.py`, `sync_mirror.py`, `check_updates.py`, `install_to_agent.py`).
 - `skills/`: The catalogue of original skills, one directory each at `skills/<skill>/` (flat since 2026-10-31). Vendored upstream skills do not belong here.
 - `.claude-plugin/marketplace.json`: Claude Code plugin marketplace manifest listing every skill in `skills/`.
 - `docs/agent-skills-specs/`: Working summary of the Agent Skills spec with a `last_verified` stamp; the validator warns after 90 days.

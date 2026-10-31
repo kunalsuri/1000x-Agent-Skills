@@ -24,8 +24,8 @@ jobs:
     name: Audit with no dependencies installed
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -64,13 +64,16 @@ jobs:
       # Version used to validate .claude-plugin/marketplace.json locally.
       CLAUDE_CODE_VERSION: 2.1.316
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
+          # No package.json here; keep caching off explicitly rather than rely
+          # on v5+'s automatic package-manager detection.
+          package-manager-cache: false
 
       - name: Install skills-ref (pinned commit)
         run: |
@@ -104,8 +107,8 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
