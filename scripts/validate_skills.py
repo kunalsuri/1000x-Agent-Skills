@@ -90,6 +90,16 @@ def validate_skill(skill_dir: Path) -> dict:
         score -= 40
     else:
         fm_text = fm_match.group(1)
+
+        # Several parsers, including the spec's reference validator skills-ref,
+        # split SKILL.md on the first '---' anywhere in the file. A '---'
+        # inside a frontmatter value therefore truncates the frontmatter for
+        # them even though a full YAML parser reads it correctly.
+        if "---" in fm_text:
+            errors.append(
+                "Frontmatter contains '---' inside a value. Parsers that split on "
+                "the first '---' (e.g. skills-ref) will truncate it; reword it.")
+            score -= 10
         fm_tokens = estimate_tokens(fm_text)
         metrics["frontmatter_tokens"] = fm_tokens
         

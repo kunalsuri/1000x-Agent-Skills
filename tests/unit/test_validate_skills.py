@@ -274,6 +274,14 @@ class TestSpecConformance:
         skill = self._skill(tmp_path, "name: probe\ndescription: Use when probing.\ncompatibility: [claude-code, cursor]")
         assert "must be a single string" in errors_of(validator.validate_skill(skill))
 
+    def test_triple_dash_inside_frontmatter_is_an_error(self, validator, tmp_path):
+        skill = self._skill(tmp_path, "name: probe\ndescription: Adds dividers --- between sections. Use when probing.")
+        assert "contains '---' inside a value" in errors_of(validator.validate_skill(skill))
+
+    def test_double_dash_inside_frontmatter_is_fine(self, validator, tmp_path):
+        skill = self._skill(tmp_path, "name: probe\ndescription: Reads every file -- even hidden ones. Use when probing.")
+        assert "inside a value" not in errors_of(validator.validate_skill(skill))
+
     def test_claude_code_extension_warns_not_fails(self, validator, tmp_path):
         skill = self._skill(tmp_path, "name: probe\ndescription: Use when probing.\ndisable-model-invocation: true")
         result = validator.validate_skill(skill)

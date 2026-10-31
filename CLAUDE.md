@@ -13,6 +13,7 @@
 - **Digest**: `python scripts/skill_digest.py --check`
 - **Sync mirror**: `python scripts/sync_mirror.py --write` (dry run without `--write`)
 - **Validate plugin manifest**: `claude plugin validate .`
+- **Upstream spec check**: `skills-ref validate skills/<skill>` (CI pins the version; see the `spec-conformance` job)
 - **Release**: `python skills/public-repo-release-review/scripts/audit_repo.py --target . --strict`
 - **Verify a third-party skill**: `python skills/third-party-skill-verifier/scripts/verify_skill_bundle.py <dir>`
 - **Run**: `python scripts/install_to_agent.py --target claude --all`

@@ -16,6 +16,7 @@ What this project has learned, written so that the next session (agent or human)
 
 | Date | File | Summary |
 |---|---|---|
+| 2026-10-31 | [failures: triple-dash-frontmatter](./2026-10-31_2316_failures_triple-dash-frontmatter.md) | A `---` inside a description truncates frontmatter for `skills-ref`; validator now catches it; external validators pinned in CI. |
 | 2026-10-31 | [failures: flatten-layout](./2026-10-31_2253_failures_flatten-layout.md) | Moving skills to `skills/<name>/` broke every gate; the template taught non-spec frontmatter; 7 rules distilled. |
 | 2026-10-31 | [recon: agent-skills-spec](./2026-10-31_2253_recon_agent-skills-spec.md) | Verified spec keys, eval formats, Claude Code extensions, marketplace and `npx skills` facts, with sources; what could not be verified. |
 | 2026-10-31 | [session: repo-audit](./2026-10-31_2253_session_repo-audit.md) | Decisions from the full repository audit and why. |

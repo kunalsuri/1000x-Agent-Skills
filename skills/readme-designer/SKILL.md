@@ -1,6 +1,6 @@
 ---
 name: readme-designer
-description: Transform, modernize, and design world-class repository READMEs and documentation for maximum visual impact, readability, and engagement. Applies structured spacing with <br/>, thematic dividers ---, bold hierarchy, comparison matrices, Mermaid flowcharts, ASCII art frames, shields/badges, and GitHub alert callouts. Use when creating, redesigning, formatting, modernizing, improving readability of, or polishing a project README, repository documentation, or landing page.
+description: Redesigns and audits a project README or landing-page documentation so newcomers quickly understand, install and try the project, with clear hierarchy, comparison tables, diagrams, badges and callouts. Use when the user wants a README created, rewritten, modernised, made more readable or more attractive, or says the docs are confusing or ugly, even if they do not mention Markdown.
 license: Apache-2.0
 compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
 metadata:

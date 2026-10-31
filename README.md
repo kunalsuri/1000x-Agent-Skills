@@ -81,7 +81,7 @@ A skill is code plus Markdown that an agent obeys. Most skill collections ask yo
 | Hidden instructions in Markdown | Not scanned | Scanned: invisible/Tags-block Unicode, bidi overrides, directive HTML comments, encoded payloads, pipe-to-shell, credential exfiltration |
 | Silent edits after review | Undetectable | Each attestation is bound to a SHA-256 `content_digest` of the skill's exact bytes |
 | Trigger quality | Unmeasured | Positive and near-miss negative prompts in `evals/` for every skill |
-| Spec conformance | Assumed | Frontmatter validated against the open spec; non-portable keys fail the build |
+| Spec conformance | Assumed | Frontmatter validated against the open spec by our validator **and** the spec's reference validator `skills-ref`; marketplace manifest checked by `claude plugin validate` |
 | Third-party skills | Install and hope | A dedicated verifier skill with a no-network, no-exec, read-only guarantee |
 
 ### Enforced vs. recorded
@@ -89,7 +89,7 @@ A skill is code plus Markdown that an agent obeys. Most skill collections ask yo
 | | **Enforced** | **Recorded** |
 |---|---|---|
 | Checked by | CI, on every push and pull request | A person, once, on a given day |
-| Covers | Declared capabilities, content digests, attestation schema, spec conformance, mirror and catalogue parity, the test suite | `tested_platforms` rows, `performance_summary` figures |
+| Covers | Declared capabilities, content digests, attestation schema, spec conformance (ours and `skills-ref`), plugin manifest, mirror and catalogue parity, the test suite | `tested_platforms` rows, `performance_summary` figures |
 | If it is wrong | The build fails | Nothing happens automatically |
 | How to trust it | Re-run the command yourself; it is deterministic | Read the caveat, check the date, re-run it |
 
