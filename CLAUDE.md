@@ -17,6 +17,8 @@
 - **Upstream spec check**: `skills-ref validate skills/<skill>` (CI pins the version; see the `spec-conformance` job)
 - **Release**: `python skills/public-repo-release-review/scripts/audit_repo.py --target . --strict`
 - **Verify a third-party skill**: `python skills/third-party-skill-verifier/scripts/verify_skill_bundle.py <dir>`
+- **Verify everything installed**: same script with `<dir> --collection`; `--compare <record.json>` reports what changed since a stored record.
+- **Demo**: `python skills/third-party-skill-verifier/scripts/verify_skill_bundle.py demo/installed-skills --collection`
 - **Run**: `python scripts/install_to_agent.py --target claude --all`
 
 ## Directory Architecture
@@ -26,6 +28,7 @@
 - `.claude-plugin/marketplace.json`: Claude Code plugin marketplace manifest listing every skill in `skills/`.
 - `docs/agent-skills-specs/`: Working summary of the Agent Skills spec with a `last_verified` stamp; the validator warns after 90 days.
 - `docs/lessons-learnt/`: Dated, append-only lessons written with the `lessons-learnt` skill.
+- `demo/`: Committed sample bundles -- an honest skill, the same skill after a silent update, and the stored record from the first review -- that `third-party-skill-verifier` is run over. Inert fixtures; `tests/unit/test_demo_bundles.py` re-runs the demo so its quoted output cannot rot.
 - `tests/`: Pytest suite covering the validators, the safety auditor and every skill script.
 - `utils/`: Shared utilities, JSON schema definitions, and helper scripts for skill execution.
 

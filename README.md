@@ -54,17 +54,37 @@ python scripts/install_to_agent.py --target claude --all --apply    # install to
 
 ---
 
+## 🎬 See it catch a silent update
+
+A skill you reviewed last month quietly changes. The verifier reads every file (it never runs, fetches or installs anything) and tells you what is new:
+
+```bash
+V=skills/third-party-skill-verifier/scripts/verify_skill_bundle.py
+python $V demo/installed-skills --collection                     # scan everything installed, worst first
+python $V demo/installed-skills/tidy-imports \
+  --compare demo/records/tidy-imports-2026-08-01.json            # what changed since you approved it?
+```
+
+```text
+ DO NOT INSTALL     CRIT 4   HIGH 0   WARN 2    tidy-imports
+ no known findings  CRIT 0   HIGH 0   WARN 0    note-taker
+```
+
+The update smuggled an invisible instruction into `SKILL.md`, added an unreferenced `conftest.py` that pytest runs automatically, and under-declared both. Walkthrough: [`demo/README.md`](./demo/README.md). The demo files are inert fixtures; a test re-runs this output so it cannot drift.
+
+---
+
 ## 🧰 The skills
 
 | Skill | What it does | Try saying | Code can… |
 |---|---|---|---|
-| [`third-party-skill-verifier`](./skills/third-party-skill-verifier/SKILL.md) | Statically reads **every file** in someone else's skill and reports what its code can actually do, what runs without being invoked, and what was hidden from review. Never fetches, writes or executes. | *"I downloaded this skill from GitHub, can you check it before I install it?"* | read files only |
+| [`third-party-skill-verifier`](./skills/third-party-skill-verifier/SKILL.md) | Statically reads **every file** in someone else's skill and reports what its code can actually do, what runs without being invoked, and what was hidden from review. `--collection` scans a whole skills folder; `--compare` shows what changed since a stored review. Never fetches, writes or executes. | *"I downloaded this skill from GitHub, can you check it before I install it?"* | read files only |
 | [`public-repo-release-review`](./skills/public-repo-release-review/SKILL.md) | Pre-publication audit: secret leaks, governance files (`SECURITY.md`, `CITATION.cff`, …), link integrity, hygiene. Scaffolds missing files. | *"Audit this codebase before we push it to public GitHub."* | write in workspace |
 | [`preflight-test-engineer`](./skills/preflight-test-engineer/SKILL.md) | Analyses a Python or TypeScript/React codebase, scaffolds a `tests/` suite, runs a multi-stage pre-flight. | *"Create a test suite for this codebase and verify it before we run the app."* | run processes, write in workspace |
 | [`lessons-learnt`](./skills/lessons-learnt/SKILL.md) | Turns what a session taught you into dated, append-only notes an agent *and* a human can act on next time. | *"Write the lessons learnt from this session."* | nothing (instructions only) |
 | [`multi-agent-docs`](./skills/multi-agent-docs/SKILL.md) | Scaffolds and keeps `CLAUDE.md`, `AGENTS.md`, `.claude/` and `.agents/` in sync so every agent gets the same project rules. | *"Our AGENTS.md and CLAUDE.md have drifted. Sync them."* | write in workspace |
 | [`cross-platform-dev-scripts`](./skills/cross-platform-dev-scripts/SKILL.md) | Generates matching `scripts/linux` and `scripts/win` setup/test scripts (uv with venv fallback, no sudo, no pipe-to-shell) and checks their parity. | *"Add one-command dev-setup and dev-test scripts for Windows and Linux."* | run processes, write in workspace |
-| [`readme-designer`](./skills/readme-designer/SKILL.md) | Redesigns a README for scannability and audits it (hierarchy, links, badges, callouts, Mermaid). | *"Make this README clearer and more inviting."* | write in workspace |
+| [`readme-designer`](./skills/readme-designer/SKILL.md) | Rewrites a README so a reader can tell what the project is and run it without scrolling, then scores it against a rubric and fixes every broken link. | *"Make this README clearer and more inviting."* | write in workspace |
 | [`saas-app-builder`](./skills/saas-app-builder/SKILL.md) | Scaffolds a full-stack SaaS app (React 19, Tailwind v4, shadcn/ui, Express) with a four-harness test suite. | *"Create a full-stack SaaS app with tests."* | write in workspace |
 
 The **Code can…** column is the skill's `capabilities` block from its `attestation.json`, in plain words. CI fails if the code exceeds it. Each skill's attestation status (`DRAFT` / `TESTED` / `VERIFIED`) is in the same file; read its `tested_platforms` rows and caveats before relying on it.
@@ -164,6 +184,7 @@ skills/<skill>/            canonical skills: SKILL.md, attestation.json, evals/,
 .claude-plugin/            Claude Code plugin marketplace manifest
 .claude/skills/            vendored skill-creator, loaded by Claude Code in this repo only
 scripts/                   validator, safety auditor, digest tool, mirror sync, installer
+demo/                      inert sample bundles for the verifier demo (not skills; not installed)
 docs/                      spec summary, schemas, allowlist, lessons learnt, audits
 tests/                     pytest suite for the tooling and every skill script
 ```
