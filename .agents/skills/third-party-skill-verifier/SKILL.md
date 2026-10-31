@@ -5,7 +5,7 @@ license: Apache-2.0
 compatibility: Requires Python 3.10+ for the bundled scripts (standard library only).
 metadata:
   author: Kunal Suri
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Third-Party Skill Verifier
@@ -20,6 +20,17 @@ python scripts/verify_skill_bundle.py /path/to/the/downloaded-skill
 
 Exit `0` = nothing found, `1` = a human must read the findings, `2` = do not
 install, `3` = the tool could not run.
+
+Two more shapes of the same command, because installing a skill is rarely a
+one-time act:
+
+```bash
+# everything already installed, one line per skill, worst first
+python scripts/verify_skill_bundle.py ~/.claude/skills --collection
+
+# what changed since the run you kept a record of
+python scripts/verify_skill_bundle.py ./their-skill --compare ./their-skill-2026-08-01.json
+```
 
 ## What this is for
 
@@ -89,12 +100,32 @@ at the time.
 ### 4. Re-verify after any update
 
 ```bash
+# blocking: is this the same bytes I reviewed?
 python scripts/verify_skill_bundle.py /tmp/review/their-skill \
   --expect-digest sha256:<the digest from the record>
+
+# informative: what is different now?
+python scripts/verify_skill_bundle.py /tmp/review/their-skill \
+  --compare verification/their-skill-2026-08-31.json
 ```
 
 A skill that was reviewed once and updated silently is the rug-pull case.
-Pinning the digest turns a silent change into a blocking finding.
+`--expect-digest` turns a silent change into a blocking finding. `--compare`
+answers the question a reviewer actually has on the second look -- which
+lines are new -- by diffing the findings against the stored record.
+Fingerprints hash the text that triggered a finding rather than its line
+number, so code that merely moved does not read as new.
+
+### 5. Check what is already installed
+
+```bash
+python scripts/verify_skill_bundle.py ~/.claude/skills --collection
+```
+
+`--collection` treats each immediate subdirectory as its own bundle and ends
+with one line per skill, worst first. The exit code is the worst verdict in
+the set. Nothing is graded against anything else -- the table is a reading
+order, not a ranking.
 
 ## Reading the output
 
@@ -131,6 +162,17 @@ be the code you read.
 **`EXT-CAP-UNDECLARED`** -- the bundle's own attestation understates what
 its code does. A declaration the code exceeds is worse than no declaration,
 because it is the document you would have trusted instead of reading.
+
+**`EXT-DEPENDENCY`** -- packages a manifest asks a package manager to
+install. Their code is not in the bundle, is not analysed here, and in
+several ecosystems runs at install time, before any file you reviewed is
+read. `EXT-CAP-UNPROVEN` marks where an *import* outran the analysis; this
+marks where the *install* does.
+
+**`EXT-BASELINE-DRIFT`** -- the bundle changed since the record you kept, and
+these findings are the ones that are new. `EXT-RULESET-DRIFT` is its quieter
+sibling: identical bytes, but this ruleset now reports something the older
+one did not, so nothing on disk changed -- what changed is what the tool knows.
 
 **`EXT-CAP-UNPROVEN`** -- the bundle imports a package that is not in the
 standard library, not one of its own files, and not one this tool has rules
@@ -179,6 +221,13 @@ When a user asks you to check a skill:
   hostile package will pass this tool.
 - Nothing runs, so nothing that only reveals itself at runtime is caught.
 - A determined author who reads this file can evade every check in it.
+
+## Seeing it work before trusting it
+
+The repository this skill ships from carries `demo/`: an honest skill, the
+same skill after a silent update, and the stored record from the first
+review. Two commands reproduce the whole story on real files, and a test
+re-runs them on every CI run so the quoted output cannot rot.
 
 ## Reproducing a verification
 
