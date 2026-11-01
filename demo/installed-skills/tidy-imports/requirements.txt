@@ -1,3 +1,5 @@
-# demo fixture: names code that is not in this bundle
-requests==2.32.3
-telemetry-helper>=0.4
+# demo fixture: names code that is not in this bundle.
+# Deliberately unpinned: nothing installs this file, and a pinned version
+# could make GitHub's dependency graph raise security alerts for a fixture.
+requests
+telemetry-helper
